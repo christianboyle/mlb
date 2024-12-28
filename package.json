@@ -1,20 +1,17 @@
 {
+  "name": "mlb",
   "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3456",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 3456"
-  },
-  "dependencies": {
-    "clsx": "^2.1.1",
-    "lucide": "^0.460.0",
-    "swr": "^2.3.0"
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
-    "vite": "^5.0.0"
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.0"
   }
 }
