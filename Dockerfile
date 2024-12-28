@@ -1,58 +1,42 @@
-# Use Node.js LTS (Latest)
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
+# Build stage
+FROM node:20 AS builder
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install specific npm version and configure
+RUN npm install -g npm@10.2.4 && \
+    npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-factor 2 && \
+    npm config set fetch-retry-mintimeout 10000 && \
+    npm config set fetch-retry-maxtimeout 60000
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+# Copy package files first
+COPY package*.json ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies and Rollup
+RUN npm install --no-optional --no-fund --no-audit && \
+    npm install @rollup/rollup-linux-x64-gnu
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source (excluding node_modules due to .dockerignore)
 COPY . .
 
-# Create public directory in builder stage
-RUN mkdir -p public
+# Build
+RUN npm run build
 
-# Build Next.js
-RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm build
-
-# Production image, copy all the files and run next
-FROM base AS runner
+# Production stage
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV PORT 3456
-ENV HOSTNAME "0.0.0.0"
-ENV NEXT_PUBLIC_BASE_URL "https://mlb.christianboyle.com"
+# Copy built assets and server
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/server.js ./server.js
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget
+# Install production dependencies
+RUN npm install --omit=dev --no-optional --no-fund --no-audit
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Create directories and set permissions
-RUN mkdir -p public .next && \
-    chown nextjs:nodejs public .next
-
-# Copy build output
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-USER nextjs
-
+# Expose port
 EXPOSE 3456
 
-CMD ["node", "server.js"] 
+# Start the app
+CMD ["npm", "start"] 
