@@ -10,15 +10,15 @@ import useSWR from 'swr';
 
 type SortDirection = 'asc' | 'desc';
 
-export function Scores({ year = 2024, teamId = '7' }) {
+export function Schedule({ teamId = '7' }) {
   const { data, error, isLoading } = useSWR(
-    [`/api/scores`, year, teamId],
-    () => getTodaySchedule(year, teamId, false)
+    [`/api/schedule`, 2025, teamId],
+    () => getTodaySchedule(2025, teamId, true)
   );
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showSpringTraining, setShowSpringTraining] = useState(true);
 
-  if (error) return <div>Error loading scores</div>;
+  if (error) return <div>Error loading schedule</div>;
   if (isLoading) return <div>Loading...</div>;
   if (!data?.events) return null;
 

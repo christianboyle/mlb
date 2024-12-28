@@ -1,5 +1,3 @@
-import { unstable_cacheLife as cacheLife } from 'next/cache';
-
 // Constants
 const DEFAULT_LOGO = 'https://a.espncdn.com/i/teamlogos/mlb/500/default-team-logo.png';
 const VALID_TEAM_IDS = ['4', '5', '6', '7', '9'];
@@ -38,6 +36,7 @@ export const AL_CENTRAL_TEAMS = [
 export const CURRENT_SEASON = 2024;
 export const DISPLAY_YEAR = 2025;
 const AVAILABLE_SEASONS = [2024, 2023, 2022, 2021, 2020];
+const DEBUG = false;  // Easy toggle for debug mode
 
 // Types
 export type TeamBasicInfo = {
@@ -162,6 +161,7 @@ export interface Game {
   isFutureGame: boolean;
   status?: string;  // Add status field for postponed games
   isSpringTraining: boolean;
+  promotions?: Promotion[];
 }
 
 interface TeamData {
@@ -491,7 +491,15 @@ function isValidGame(game: any): game is Game {
     typeof game.isPostseason === 'boolean' &&
     typeof game.isHome === 'boolean' &&
     typeof game.formattedDate === 'string' &&
-    typeof game.isFutureGame === 'boolean'
+    typeof game.isFutureGame === 'boolean' &&
+    (game.promotions === undefined || 
+      (Array.isArray(game.promotions) && 
+        game.promotions.every((p: any) => 
+          typeof p.description === 'string' && 
+          typeof p.name === 'string'
+        )
+      )
+    )
   );
 }
 
@@ -604,30 +612,35 @@ const TEAM_ABBREVIATIONS: Record<string, string> = {
   '9': 'min'  // Minnesota Twins
 };
 
+// Add a simple debug utility
+function debug(area: string, message: string, data?: any) {
+  if (!DEBUG) return;
+  
+  const log = data ? 
+    `[${area}] ${message}:` :
+    `[${area}] ${message}`;
+    
+  if (data) {
+    console.log(log, data);
+  } else {
+    console.log(log);
+  }
+}
+
 // Update getTodaySchedule to include spring training games
 export async function getTodaySchedule(year = 2025, teamId = '7', isSchedule = false) {
   try {
+    debug('getTodaySchedule', 'Called with', { year, teamId, isSchedule });
+    
     const teamAbbr = TEAM_ABBREVIATIONS[teamId];
     if (!teamAbbr) {
-      console.error('Invalid team ID:', teamId);
+      debug('getTodaySchedule', 'Invalid team ID:', teamId);
       return { events: [] };
     }
 
-    // If we're looking at scores (past games), don't allow future years
-    if (year > CURRENT_SEASON && !isSchedule) {
-      return { events: [] };
-    }
-
-    // Add spring training (S) to game types
-    const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${MLB_TEAM_IDS[teamId]}&season=${year}&sportId=1&gameType=S,R,D,F,L,W`;
-    // S = Spring Training
-    // R = Regular Season
-    // D = Division Series
-    // F = First Round (Wild Card)
-    // L = League Championship Series
-    // W = World Series
-
-    // Use MLB's API endpoint
+    const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${MLB_TEAM_IDS[teamId]}&startDate=${year}-01-01&endDate=${year}-12-31&sportId=1&gameType=S,R,D,F,L,W&hydrate=promotions`;
+    debug('getTodaySchedule', 'Fetching URL', url);
+    
     const res = await fetch(url, { 
       next: { revalidate: 3600 },
       headers: {
@@ -636,37 +649,16 @@ export async function getTodaySchedule(year = 2025, teamId = '7', isSchedule = f
     });
 
     if (!res.ok) {
-      console.error('Failed to fetch schedule data');
       return { events: [] };
     }
 
     const data = await res.json();
-    console.log('Raw MLB data:', {
-      totalDates: data.dates?.length,
-      firstDate: data.dates?.[0],
-      totalGames: data.dates?.reduce((acc: number, date: any) => acc + (date.games?.length || 0), 0),
-      firstSixGames: data.dates?.slice(0, 6).flatMap((d: any) => d.games || []).map((g: any) => ({
-        date: g.gameDate,
-        homeTeam: g.teams.home.team.name,
-        awayTeam: g.teams.away.team.name,
-        gameType: g.gameType,
-        status: g.status?.detailedState
-      }))
-    });
 
     const games = formatMLBGames(data.dates, teamId, year);
-    console.log('Formatted games:', {
-      totalGames: games.length,
-      firstThreeGames: games.slice(0, 3).map(g => ({
-        date: g.date,
-        opponent: g.name,
-        isHome: g.isHome
-      }))
-    });
 
     return { events: games };
   } catch (error) {
-    console.error('Error fetching schedule:', error);
+    debug('getTodaySchedule', 'Error:', error);
     return { events: [] };
   }
 }
@@ -756,25 +748,33 @@ const MLB_TEAM_ABBR: Record<number, string> = {
   137: 'sf'   // San Francisco Giants
 };
 
+// Add this interface near other types
+interface Promotion {
+  description: string;
+  name: string;
+  imageUrl?: string;
+}
+
 // Add function to format MLB data
 function formatMLBGames(dates: any[], teamId: string, year: number): Game[] {
+  debug('formatMLBGames', 'Called with year', year);
+  
   if (!Array.isArray(dates)) {
+    debug('formatMLBGames', 'No dates array found');
     return [];
   }
 
   const games: Game[] = [];
   let skippedGames = 0;
-  
+
   dates.forEach((date, dateIndex) => {
     if (!date?.games) {
-      console.log(`Skipping date ${dateIndex}: no games`);
       return;
     }
 
     date.games.forEach((game: any, gameIndex: number) => {
       try {
         if (!game?.teams?.home || !game?.teams?.away) {
-          console.log(`Skipping game ${gameIndex} on date ${dateIndex}: missing team data`);
           skippedGames++;
           return;
         }
@@ -783,21 +783,6 @@ function formatMLBGames(dates: any[], teamId: string, year: number): Game[] {
         const awayTeam = game.teams.away;
         const selectedTeamIsHome = homeTeam.team.id === MLB_TEAM_IDS[teamId];
         const opponent = selectedTeamIsHome ? awayTeam : homeTeam;
-
-        // Log early games
-        if (dateIndex < 6) {
-          console.log(`Game ${dateIndex}:`, {
-            date: game.gameDate,
-            homeTeam: homeTeam.team.name,
-            awayTeam: awayTeam.team.name,
-            selectedTeamIsHome,
-            gameType: game.gameType,
-            status: game.status?.detailedState,
-            seriesDescription: game.seriesDescription,
-            description: game.description,
-            dayNight: game.dayNight
-          });
-        }
 
         const opponentEspnId = Object.entries(MLB_TEAM_IDS)
           .find(([_, id]) => id === opponent.team.id)?.[0];
@@ -811,7 +796,24 @@ function formatMLBGames(dates: any[], teamId: string, year: number): Game[] {
           return;
         }
 
-        const isFutureGame = gameDate > new Date();
+        // Use UTC dates for consistent comparison
+        const now = new Date();
+        const isFutureGame = gameDate.getTime() > Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          now.getUTCHours(),
+          now.getUTCMinutes()
+        );
+
+        // Simplified promotions handling
+        const promotions = selectedTeamIsHome && game.promotions 
+          ? game.promotions.map((promo: any) => ({
+              description: promo.description || '',
+              name: promo.name || '',
+              imageUrl: promo.imageUrl || undefined
+            }))
+          : undefined;
 
         const formattedGame = {
           id: `${game.gamePk}-${dateIndex}-${gameIndex}`,
@@ -826,30 +828,24 @@ function formatMLBGames(dates: any[], teamId: string, year: number): Game[] {
           isPostseason: game.gameType !== 'R' && game.gameType !== 'S',  // Postseason games
           isSpringTraining: game.gameType === 'S',  // Add spring training flag
           isHome: selectedTeamIsHome,
-          formattedDate: gameDate.toLocaleDateString('en-US', {
+          formattedDate: new Intl.DateTimeFormat('en-US', {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            timeZone: 'America/Chicago'
-          }),
+            timeZone: 'UTC'
+          }).format(gameDate),
           isFutureGame,
-          status: game.status?.detailedState || ''
+          status: game.status?.detailedState || '',
+          promotions,
         };
 
         games.push(formattedGame);
       } catch (error) {
-        console.error('Error formatting game:', error);
         skippedGames++;
       }
     });
-  });
-
-  console.log('Game processing summary:', {
-    totalProcessed: games.length,
-    skippedGames,
-    firstThreeDates: dates.slice(0, 3).map(d => d.date)
   });
 
   return games;
