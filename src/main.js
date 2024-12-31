@@ -161,4 +161,27 @@ router.addRoute('/', renderHome);
 router.addRoute('/:teamId', renderHome);
 
 // Initial route handling
-router.handleRoute(); 
+router.handleRoute();
+
+// Add resize listener to handle mobile/desktop breakpoint changes
+let wasMobile = window.innerWidth < 640;
+window.addEventListener('resize', () => {
+  const isMobile = window.innerWidth < 640;
+  // Only handle when crossing the breakpoint
+  if (isMobile !== wasMobile) {
+    wasMobile = isMobile;
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const teamId = path === '/' ? null : path.slice(1);
+    
+    if (teamId) {
+      if (isMobile && !params.get('tab')) {
+        // Add tab=scores when entering mobile breakpoint
+        router.navigate(`/${teamId}?tab=scores`, true);
+      } else if (!isMobile && params.get('tab')) {
+        // Remove tab parameter when entering desktop breakpoint
+        router.navigate(`/${teamId}`, true);
+      }
+    }
+  }
+}); 
