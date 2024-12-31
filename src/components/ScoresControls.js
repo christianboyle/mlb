@@ -1,6 +1,6 @@
 export function renderScoresControls() {
   return `
-    <div class="flex flex-col sm:flex-row justify-between mb-6">
+    <div class="flex items-center gap-4">
       <button 
         id="spring-training-toggle"
         class="text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-gray-500 dark:text-gray-400"

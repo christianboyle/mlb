@@ -11,7 +11,8 @@ export class Router {
     document.addEventListener('click', (e) => {
       if (e.target.matches('a[href^="/"]')) {
         e.preventDefault();
-        this.navigate(e.target.href);
+        const href = e.target.getAttribute('href');
+        this.navigate(href);
       }
     });
   }
@@ -33,8 +34,27 @@ export class Router {
     }
 
     if (handler) {
-      const teamId = path === '/' ? null : path.slice(1); // No teamId on root path
+      const teamId = path === '/' ? null : path.slice(1);
       await handler({ teamId, params });
+
+      // Update active state in mobile nav based on tab
+      const tab = params.get('tab');
+      if (teamId) {
+        const links = document.querySelectorAll('nav a');
+        links.forEach(link => {
+          const isActive = tab === 'schedule' ? 
+            link.href.includes('schedule') : 
+            !link.href.includes('schedule') && link.href !== '/';
+          
+          if (isActive) {
+            link.classList.remove('text-gray-500', 'dark:text-gray-400');
+            link.classList.add('text-gray-900', 'dark:text-gray-100');
+          } else if (!link.href.endsWith('/')) {
+            link.classList.add('text-gray-500', 'dark:text-gray-400');
+            link.classList.remove('text-gray-900', 'dark:text-gray-100');
+          }
+        });
+      }
     } else {
       // Default to home page without teamId
       const defaultHandler = this.routes.get('/');

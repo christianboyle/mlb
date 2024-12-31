@@ -35,66 +35,15 @@ export async function renderScores(teamId, season) {
         <!-- Team Record -->
         <h3 class="text-gray-700 dark:text-gray-300 mb-4">${teamData.record} • ${teamData.standing}</h3>
 
-        <!-- Team Select and Year Filter -->
-        <div class="flex items-center gap-4 mb-6">
-          <div class="relative">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 flex-shrink-0">
-                <img 
-                  alt="Team logo"
-                  src="${currentTeam.logo}"
-                  class="w-full h-full"
-                  width="24"
-                  height="24"
-                />
-              </div>
-              <div class="relative flex-grow">
-                <select 
-                  class="appearance-none w-full bg-white dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-sans"
-                >
-                  <option value="">Select a team</option>
-                  ${AL_CENTRAL_TEAMS.map(team => `
-                    <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
-                      ${team.name}
-                    </option>
-                  `).join('')}
-                </select>
-                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-gray-500">
-                    <path d="m6 9 6 6 6-6"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Year Filter -->
-          <div class="relative">
-            <select 
-              class="appearance-none bg-white dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-              value="${season}"
-            >
-              ${[2024, 2023, 2022, 2021, 2020].map(year => `
-                <option value="${year}" ${year === parseInt(season) ? 'selected' : ''}>
-                  ${year}
-                </option>
-              `).join('')}
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Scores Section -->
+        <!-- Controls -->
         <div class="flex items-center justify-between mb-4">
           <div class="text-sm text-gray-500">
             ${data.events.length} Games
           </div>
+          ${renderScoresControls()}
         </div>
-        ${renderScoresControls()}
+
+        <!-- Games List -->
         <div id="games-list">
           <!-- Games will be rendered here -->
         </div>
@@ -102,14 +51,6 @@ export async function renderScores(teamId, season) {
     `;
 
     scoresContainer.innerHTML = html;
-
-    // Add team select event listener
-    document.querySelector('select').addEventListener('change', (e) => {
-      const newTeamId = e.target.value;
-      if (newTeamId) {
-        window.location.href = `/${newTeamId}`;
-      }
-    });
 
     // Filter functions
     const filterBySeasonType = (events, showSpringTraining) => {
@@ -219,12 +160,6 @@ export async function renderScores(teamId, season) {
     // Initial render
     updateSpringTrainingButton(false);
     renderFilteredGames();
-
-    // Add event listeners
-    document.querySelector('select[value="' + season + '"]').addEventListener('change', (e) => {
-      const newSeason = e.target.value;
-      window.location.href = `/${teamId}?season=${newSeason}`;
-    });
 
   } catch (error) {
     console.error('Error loading scores:', error);
