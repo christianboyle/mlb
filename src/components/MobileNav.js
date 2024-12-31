@@ -2,14 +2,48 @@ export function renderMobileNav(currentPath) {
   const isRoot = currentPath === '/';
   const teamId = isRoot ? null : currentPath.slice(1);
   const params = new URLSearchParams(window.location.search);
-  const tab = params.get('tab');
+  const currentTab = params.get('tab');
+  const season = params.get('season');
+
+  console.log('MobileNav Debug:', {
+    currentPath,
+    isRoot,
+    teamId,
+    currentTab,
+    searchParams: Object.fromEntries(params.entries())
+  });
+
+  const getTabClass = (tabName) => {
+    const baseClasses = 'flex flex-col items-center justify-center w-full h-full';
+    
+    // No team selected = all tabs gray
+    if (!teamId) {
+      const classes = `${baseClasses} !text-gray-500 dark:!text-gray-400`;
+      console.log(`${tabName} tab classes (no team):`, classes);
+      return classes;
+    }
+
+    // Only highlight if tab parameter exactly matches
+    const isActive = currentTab === tabName;
+    const colorClass = isActive ? '!text-gray-900 dark:!text-gray-100' : '!text-gray-500 dark:!text-gray-400';
+    const classes = `${baseClasses} ${colorClass}`;
+    console.log(`${tabName} tab classes:`, { isActive, currentTab, classes });
+    return classes;
+  };
+
+  const getTabUrl = (tab) => {
+    if (!teamId) return '';
+    const url = `/${teamId}?tab=${tab}`;
+    return season ? `${url}&season=${season}` : url;
+  };
 
   return `
     <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
       <div class="flex justify-around items-center h-16">
         <a 
-          href="${teamId ? `/${teamId}` : '/'}" 
-          class="flex flex-col items-center justify-center w-full h-full ${!tab ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+          href="${getTabUrl('scores')}" 
+          class="${getTabClass('scores')}"
+          ${!teamId ? 'aria-disabled="true" style="pointer-events: none;"' : ''}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
             <path d="M2 12h20"></path>
@@ -21,8 +55,9 @@ export function renderMobileNav(currentPath) {
           <span class="text-xs mt-1">Scores</span>
         </a>
         <a 
-          href="${teamId ? `/${teamId}?tab=schedule` : '/'}" 
-          class="flex flex-col items-center justify-center w-full h-full ${tab === 'schedule' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+          href="${getTabUrl('schedule')}" 
+          class="${getTabClass('schedule')}"
+          ${!teamId ? 'aria-disabled="true" style="pointer-events: none;"' : ''}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
             <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
@@ -33,8 +68,9 @@ export function renderMobileNav(currentPath) {
           <span class="text-xs mt-1">Schedule</span>
         </a>
         <a 
-          href="${teamId ? `/${teamId}?tab=division` : '/'}" 
-          class="flex flex-col items-center justify-center w-full h-full ${tab === 'division' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+          href="${getTabUrl('division')}" 
+          class="${getTabClass('division')}"
+          ${!teamId ? 'aria-disabled="true" style="pointer-events: none;"' : ''}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>

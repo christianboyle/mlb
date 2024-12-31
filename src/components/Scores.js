@@ -109,7 +109,7 @@ export async function renderScores(teamId, season) {
               : `${selectedTeam.score}-${opposingTeam.score}`;
 
             return `
-              <div class="flex flex-col min-[450px]:flex-row justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
+              <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
                 game.isSpringTraining ? 'bg-yellow-50/30 dark:bg-yellow-900/20' : 
                 game.isPostseason ? 'bg-green-50/30 dark:bg-green-900/20' :
                 game.isDoubleHeader ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''
@@ -125,9 +125,9 @@ export async function renderScores(teamId, season) {
                   />
                   <a class="font-semibold ml-4" href="/${displayTeam.team.id}">${displayTeam.team.name}</a>
                 </div>
-                <div class="flex flex-row-reverse justify-end min-[450px]:flex-row items-center">
+                <div class="flex items-center gap-4">
                   <p class="text-gray-700 dark:text-gray-300 tabular-nums">${score}</p>
-                  <p class="font-semibold ml-0 min-[450px]:ml-2 w-5 mr-4 min-[450px]:mr-0 text-center ${
+                  <p class="font-semibold w-5 text-center ${
                     isWin 
                       ? 'text-green-700 dark:text-green-500'
                       : 'text-red-700 dark:text-red-500'

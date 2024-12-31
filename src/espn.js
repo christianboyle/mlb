@@ -243,28 +243,87 @@ export async function getDivisionStandings(season) {
 
 export async function getSchedule(teamId, season) {
   try {
-    const res = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}`
+    // Fetch spring training games
+    const springRes = await fetch(
+      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
     );
-    const data = await res.json();
+    const springData = await springRes.json();
+
+    // Fetch regular season games
+    const regularRes = await fetch(
+      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
+    );
+    const regularData = await regularRes.json();
+
+    // Fetch postseason games
+    const postRes = await fetch(
+      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
+    );
+    const postData = await postRes.json();
 
     return {
-      events: data.events?.map(event => ({
-        id: event.id,
-        date: new Date(event.date),
-        name: event.name,
-        shortName: event.shortName,
-        competitions: event.competitions?.map(comp => ({
-          competitors: comp.competitors?.map(team => ({
-            homeAway: team.homeAway,
-            team: {
-              name: team.team?.displayName || team.team?.name,
-              logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
-              id: team.team?.id
-            }
-          }))
-        }))?.[0]
-      })) || []
+      events: [
+        // Spring Training games
+        ...(springData.events?.map(event => ({
+          id: event.id,
+          date: new Date(event.date),
+          name: event.name,
+          shortName: event.shortName,
+          isSpringTraining: true,
+          competitions: event.competitions?.map(comp => ({
+            competitors: comp.competitors?.map(team => ({
+              homeAway: team.homeAway,
+              team: {
+                name: team.team?.displayName || team.team?.name,
+                logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                id: team.team?.id
+              }
+            }))
+          }))?.[0]
+        })) || []),
+        // Regular Season games
+        ...(regularData.events?.map(event => ({
+          id: event.id,
+          date: new Date(event.date),
+          name: event.name,
+          shortName: event.shortName,
+          isSpringTraining: false,
+          competitions: event.competitions?.map(comp => ({
+            competitors: comp.competitors?.map(team => ({
+              homeAway: team.homeAway,
+              team: {
+                name: team.team?.displayName || team.team?.name,
+                logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                id: team.team?.id
+              }
+            }))
+          }))?.[0]
+        })) || []),
+        // Postseason games
+        ...(postData.events?.map(event => ({
+          id: event.id,
+          date: new Date(event.date),
+          name: event.name,
+          shortName: event.shortName,
+          isSpringTraining: false,
+          competitions: event.competitions?.map(comp => ({
+            competitors: comp.competitors?.map(team => ({
+              homeAway: team.homeAway,
+              team: {
+                name: team.team?.displayName || team.team?.name,
+                logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                id: team.team?.id
+              }
+            }))
+          }))?.[0]
+        })) || [])
+      ]
+        // Remove duplicates based on event ID
+        .filter((event, index, self) => 
+          index === self.findIndex((e) => e.id === event.id)
+        )
+        // Sort by date
+        .sort((a, b) => a.date - b.date)
     };
   } catch (error) {
     console.error('Error fetching schedule:', error);
