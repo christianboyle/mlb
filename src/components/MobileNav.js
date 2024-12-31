@@ -5,30 +5,18 @@ export function renderMobileNav(currentPath) {
   const currentTab = params.get('tab');
   const season = params.get('season');
 
-  console.log('MobileNav Debug:', {
-    currentPath,
-    isRoot,
-    teamId,
-    currentTab,
-    searchParams: Object.fromEntries(params.entries())
-  });
-
   const getTabClass = (tabName) => {
     const baseClasses = 'flex flex-col items-center justify-center w-full h-full';
     
     // No team selected = all tabs gray
     if (!teamId) {
-      const classes = `${baseClasses} !text-gray-500 dark:!text-gray-400`;
-      console.log(`${tabName} tab classes (no team):`, classes);
-      return classes;
+      return `${baseClasses} !text-gray-500 dark:!text-gray-400`;
     }
 
     // Only highlight if tab parameter exactly matches
     const isActive = currentTab === tabName;
     const colorClass = isActive ? '!text-gray-900 dark:!text-gray-100' : '!text-gray-500 dark:!text-gray-400';
-    const classes = `${baseClasses} ${colorClass}`;
-    console.log(`${tabName} tab classes:`, { isActive, currentTab, classes });
-    return classes;
+    return `${baseClasses} ${colorClass}`;
   };
 
   const getTabUrl = (tab) => {

@@ -34,6 +34,15 @@ export const AL_CENTRAL_TEAMS = [
 export const CURRENT_SEASON = 2024;
 export const DISPLAY_YEAR = 2025;
 
+// Helper function to fetch games by season type
+async function fetchGames(teamId, season, type) {
+  const seasonType = type === 'spr' ? 1 : type === 'reg' ? 2 : 3;
+  const res = await fetch(
+    `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=${seasonType}`
+  );
+  return res.json();
+}
+
 export async function getScores(teamId, season) {
   try {
     // Fetch spring training games
@@ -41,23 +50,13 @@ export async function getScores(teamId, season) {
       `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
     );
     const springData = await springRes.json();
-
+    
     // Fetch regular season games
     const regularRes = await fetch(
       `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
     );
     const regularData = await regularRes.json();
 
-    // Fetch postseason games
-    const postRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
-    );
-    const postData = await postRes.json();
-
-    // Debug logging
-    console.log('Spring Training games:', springData.events?.length || 0);
-    console.log('Regular Season games:', regularData.events?.length || 0);
-    
     // Group games by date to identify double-headers
     const gamesByDate = {};
     regularData.events?.forEach(e => {
@@ -68,18 +67,11 @@ export async function getScores(teamId, season) {
       gamesByDate[date].push(e.id);
     });
 
-    // Log any dates with multiple games
-    console.log('Dates with multiple games:', 
-      Object.entries(gamesByDate)
-        .filter(([date, games]) => games.length > 1)
+    // Fetch postseason games
+    const postRes = await fetch(
+      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
     );
-
-    console.log('Postseason games:', postData.events?.length || 0);
-    console.log('Total before deduplication:', 
-      (springData.events?.length || 0) + 
-      (regularData.events?.length || 0) + 
-      (postData.events?.length || 0)
-    );
+    const postData = await postRes.json();
 
     // Transform the data to match our needs
     const transformedData = {
@@ -155,14 +147,6 @@ export async function getScores(teamId, season) {
         )
         .sort((a, b) => b.date - a.date)
     };
-
-    // Debug logging after deduplication
-    console.log('Total after deduplication:', transformedData.events.length);
-    console.log('Games by type:', {
-      spring: transformedData.events.filter(e => e.isSpringTraining).length,
-      regular: transformedData.events.filter(e => !e.isSpringTraining && !e.isPostseason).length,
-      post: transformedData.events.filter(e => e.isPostseason).length
-    });
 
     return transformedData;
   } catch (error) {
