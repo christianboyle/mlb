@@ -32,7 +32,7 @@ export async function renderSchedule(teamId, season) {
             
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
-                game.isSpringTraining ? 'bg-[#fffaf0] dark:bg-[#1c1410]' : ''
+                game.isSpringTraining ? 'bg-yellow-50 bg-opacity-30 dark:bg-yellow-900 dark:bg-opacity-20' : ''
               }" ${game.isSpringTraining ? 'style="display: none;"' : ''}>
                 <div class="flex items-center">
                   <div class="w-14 text-sm text-gray-600 dark:text-gray-400">${formattedDate}</div>
@@ -80,7 +80,7 @@ export async function renderSchedule(teamId, season) {
         // Filter games
         const games = document.querySelectorAll('#schedule-list > div');
         games.forEach(game => {
-          if (game.classList.contains('bg-[#fffaf0]') || game.classList.contains('dark:bg-[#1c1410]')) {
+          if (game.classList.contains('bg-yellow-50') || game.classList.contains('dark:bg-yellow-900')) {
             game.style.display = newEnabled ? 'flex' : 'none';
           }
         });
