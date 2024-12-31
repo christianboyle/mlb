@@ -80,7 +80,6 @@ async function renderHome({ teamId, params }) {
         id="dark-mode-toggle"
         class="absolute top-6 right-6 p-2 rounded-lg hover:bg-[#bbb] dark:hover:bg-gray-800 z-10"
         aria-label="Toggle dark mode"
-        onclick="(${toggleDarkMode.toString()})()"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block h-5 w-5">
           <circle cx="12" cy="12" r="4"></circle>
@@ -148,6 +147,9 @@ async function renderHome({ teamId, params }) {
 
   // Wait for next tick to ensure DOM is updated
   setTimeout(async () => {
+    // Add dark mode toggle listener
+    document.getElementById('dark-mode-toggle')?.addEventListener('click', toggleDarkMode);
+
     if (teamId) {
       // On desktop or if scores tab is active, render scores
       if (!tab || tab === 'scores') {
