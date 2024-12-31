@@ -78,7 +78,7 @@ async function renderHome({ teamId, params }) {
     <div class="flex flex-col h-[calc(100vh_-_48px)] relative">
       <button 
         id="dark-mode-toggle"
-        class="absolute top-6 right-6 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 z-10"
+        class="absolute top-6 right-6 p-2 rounded-lg hover:bg-[#bbb] dark:hover:bg-gray-800 z-10"
         aria-label="Toggle dark mode"
         onclick="(${toggleDarkMode.toString()})()"
       >
