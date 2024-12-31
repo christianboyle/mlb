@@ -110,9 +110,9 @@ export async function renderScores(teamId, season) {
 
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
-                game.isSpringTraining ? 'bg-yellow-50/30 dark:bg-yellow-900/20' : 
-                game.isPostseason ? 'bg-green-50/30 dark:bg-green-900/20' :
-                game.isDoubleHeader ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''
+                game.isSpringTraining ? 'bg-[#fffaf0] dark:bg-[#1c1410]' : 
+                game.isPostseason ? 'bg-[#f0fff4] dark:bg-[#101c14]' :
+                game.isDoubleHeader ? 'bg-[#f0f7ff] dark:bg-[#101418]' : ''
               }">
                 <div class="flex items-center">
                   <div class="w-14 text-sm text-gray-600 dark:text-gray-400">${formattedDate}</div>
