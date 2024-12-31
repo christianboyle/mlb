@@ -26,7 +26,7 @@ export function renderMobileNav(currentPath) {
   };
 
   return `
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-[#ccc] dark:bg-black border-t border-gray-200 dark:border-gray-800">
       <div class="flex justify-around items-center h-16">
         <a 
           href="${getTabUrl('scores')}" 

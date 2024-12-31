@@ -1,15 +1,42 @@
-export const AL_CENTRAL_TEAMS = [
+export const AL_EAST_TEAMS = [
   {
-    name: 'Minnesota Twins',
-    teamId: '9',
-    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/min.png',
-    color: '002B5C'
+    name: 'Baltimore Orioles',
+    teamId: '1',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/bal.png',
+    color: 'DF4601'
   },
   {
-    name: 'Detroit Tigers',
-    teamId: '6',
-    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/det.png',
-    color: '0C2340'
+    name: 'Boston Red Sox',
+    teamId: '2',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/bos.png',
+    color: 'BD3039'
+  },
+  {
+    name: 'New York Yankees',
+    teamId: '10',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/nyy.png',
+    color: '003087'
+  },
+  {
+    name: 'Tampa Bay Rays',
+    teamId: '30',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/tb.png',
+    color: '092C5C'
+  },
+  {
+    name: 'Toronto Blue Jays',
+    teamId: '14',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/tor.png',
+    color: '134A8E'
+  }
+];
+
+export const AL_CENTRAL_TEAMS = [
+  {
+    name: 'Chicago White Sox',
+    teamId: '4',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/chw.png',
+    color: '000000'
   },
   {
     name: 'Cleveland Guardians',
@@ -18,17 +45,164 @@ export const AL_CENTRAL_TEAMS = [
     color: 'E31937'
   },
   {
-    name: 'Chicago White Sox',
-    teamId: '4',
-    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/chw.png',
-    color: '000000'
+    name: 'Detroit Tigers',
+    teamId: '6',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/det.png',
+    color: '0C2340'
   },
   {
     name: 'Kansas City Royals',
     teamId: '7',
     logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/kc.png',
     color: '004687'
+  },
+  {
+    name: 'Minnesota Twins',
+    teamId: '9',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/min.png',
+    color: '002B5C'
   }
+];
+
+export const AL_WEST_TEAMS = [
+  {
+    name: 'Houston Astros',
+    teamId: '18',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/hou.png',
+    color: '002D62'
+  },
+  {
+    name: 'Los Angeles Angels',
+    teamId: '3',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/laa.png',
+    color: 'BA0021'
+  },
+  {
+    name: 'Oakland Athletics',
+    teamId: '11',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/oak.png',
+    color: '003831'
+  },
+  {
+    name: 'Seattle Mariners',
+    teamId: '12',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/sea.png',
+    color: '0C2C56'
+  },
+  {
+    name: 'Texas Rangers',
+    teamId: '13',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/tex.png',
+    color: '003278'
+  }
+];
+
+export const NL_EAST_TEAMS = [
+  {
+    name: 'Atlanta Braves',
+    teamId: '15',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/atl.png',
+    color: 'CE1141'
+  },
+  {
+    name: 'Miami Marlins',
+    teamId: '28',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/mia.png',
+    color: '00A3E0'
+  },
+  {
+    name: 'New York Mets',
+    teamId: '21',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/nym.png',
+    color: 'FF5910'
+  },
+  {
+    name: 'Philadelphia Phillies',
+    teamId: '22',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/phi.png',
+    color: 'E81828'
+  },
+  {
+    name: 'Washington Nationals',
+    teamId: '20',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/wsh.png',
+    color: 'AB0003'
+  }
+];
+
+export const NL_CENTRAL_TEAMS = [
+  {
+    name: 'Chicago Cubs',
+    teamId: '16',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/chc.png',
+    color: '0E3386'
+  },
+  {
+    name: 'Cincinnati Reds',
+    teamId: '17',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/cin.png',
+    color: 'C6011F'
+  },
+  {
+    name: 'Milwaukee Brewers',
+    teamId: '8',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/mil.png',
+    color: '12284B'
+  },
+  {
+    name: 'Pittsburgh Pirates',
+    teamId: '23',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/pit.png',
+    color: '000000'
+  },
+  {
+    name: 'St. Louis Cardinals',
+    teamId: '24',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/stl.png',
+    color: 'C41E3A'
+  }
+];
+
+export const NL_WEST_TEAMS = [
+  {
+    name: 'Arizona Diamondbacks',
+    teamId: '29',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/ari.png',
+    color: 'A71930'
+  },
+  {
+    name: 'Colorado Rockies',
+    teamId: '27',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/col.png',
+    color: '333366'
+  },
+  {
+    name: 'Los Angeles Dodgers',
+    teamId: '19',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/lad.png',
+    color: '005A9C'
+  },
+  {
+    name: 'San Diego Padres',
+    teamId: '25',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/sd.png',
+    color: '2F241D'
+  },
+  {
+    name: 'San Francisco Giants',
+    teamId: '26',
+    logo: 'https://a.espncdn.com/i/teamlogos/mlb/500/sf.png',
+    color: 'FD5A1E'
+  }
+];
+
+export const ALL_TEAMS = [
+  ...AL_EAST_TEAMS,
+  ...AL_CENTRAL_TEAMS,
+  ...AL_WEST_TEAMS,
+  ...NL_EAST_TEAMS,
+  ...NL_CENTRAL_TEAMS,
+  ...NL_WEST_TEAMS
 ];
 
 export const CURRENT_SEASON = 2024;
@@ -38,7 +212,7 @@ export const DISPLAY_YEAR = 2025;
 async function fetchGames(teamId, season, type) {
   const seasonType = type === 'spr' ? 1 : type === 'reg' ? 2 : 3;
   const res = await fetch(
-    `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=${seasonType}`
+    `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=${seasonType}`
   );
   return res.json();
 }
@@ -47,13 +221,13 @@ export async function getScores(teamId, season) {
   try {
     // Fetch spring training games
     const springRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
+      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
     );
     const springData = await springRes.json();
     
     // Fetch regular season games
     const regularRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
+      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
     );
     const regularData = await regularRes.json();
 
@@ -69,7 +243,7 @@ export async function getScores(teamId, season) {
 
     // Fetch postseason games
     const postRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
+      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
     );
     const postData = await postRes.json();
 
@@ -150,37 +324,63 @@ export async function getScores(teamId, season) {
 
     return transformedData;
   } catch (error) {
-    console.error('Error fetching scores:', error);
-    throw new Error('Failed to fetch scores');
+    console.error('Failed to fetch scores');
+    throw error;
   }
 }
 
 export async function getTeamRecord(teamId, season) {
   try {
     // Get all division standings to determine position
-    const standings = await getDivisionStandings(season);
+    const standings = await getDivisionStandings(season, teamId);
     const teamStanding = standings.find(team => team.id === teamId);
 
     return {
       record: teamStanding?.record || '0-0',
-      standing: teamStanding?.standingSummary || 'AL Central'
+      standing: teamStanding?.standingSummary || ''
     };
   } catch (error) {
     console.error('Error fetching team record:', error);
     return {
       record: '0-0',
-      standing: 'AL Central'
+      standing: ''
     };
   }
 }
 
-export async function getDivisionStandings(season) {
+export async function getDivisionStandings(season, teamId) {
   try {
+    // Determine which division the team belongs to
+    let divisionTeams;
+    let divisionName;
+    
+    if (AL_EAST_TEAMS.some(team => team.teamId === teamId)) {
+      divisionTeams = AL_EAST_TEAMS;
+      divisionName = 'AL East';
+    } else if (AL_CENTRAL_TEAMS.some(team => team.teamId === teamId)) {
+      divisionTeams = AL_CENTRAL_TEAMS;
+      divisionName = 'AL Cent';
+    } else if (AL_WEST_TEAMS.some(team => team.teamId === teamId)) {
+      divisionTeams = AL_WEST_TEAMS;
+      divisionName = 'AL West';
+    } else if (NL_EAST_TEAMS.some(team => team.teamId === teamId)) {
+      divisionTeams = NL_EAST_TEAMS;
+      divisionName = 'NL East';
+    } else if (NL_CENTRAL_TEAMS.some(team => team.teamId === teamId)) {
+      divisionTeams = NL_CENTRAL_TEAMS;
+      divisionName = 'NL Cent';
+    } else if (NL_WEST_TEAMS.some(team => team.teamId === teamId)) {
+      divisionTeams = NL_WEST_TEAMS;
+      divisionName = 'NL West';
+    } else {
+      throw new Error('Team not found in any division');
+    }
+
     // Fetch each team's data to get their standings
-    const teamPromises = AL_CENTRAL_TEAMS.map(async (team) => {
+    const teamPromises = divisionTeams.map(async (team) => {
       // Fetch regular season games for record
       const scheduleRes = await fetch(
-        `/api/apis/site/v2/sports/baseball/mlb/teams/${team.teamId}/schedule?season=${season}&seasontype=2`
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${team.teamId}/schedule?season=${season}&seasontype=2`
       );
       const scheduleData = await scheduleRes.json();
       
@@ -188,8 +388,10 @@ export async function getDivisionStandings(season) {
       let wins = 0;
       let losses = 0;
       scheduleData.events?.forEach(event => {
-        const teamInGame = event.competitions?.[0]?.competitors?.find(c => c.team.id === team.teamId);
-        if (teamInGame?.winner) wins++;
+        const teamInGame = event.competitions?.[0]?.competitors?.find(
+          c => c.team?.id === team.teamId
+        );
+        if (teamInGame?.winner === true) wins++;
         else if (teamInGame?.winner === false) losses++;
       });
 
@@ -216,7 +418,7 @@ export async function getDivisionStandings(season) {
       const suffix = position === 1 ? 'st' : position === 2 ? 'nd' : position === 3 ? 'rd' : 'th';
       return {
         ...team,
-        standingSummary: `${position}${suffix} in AL Cent`
+        standingSummary: `${position}${suffix} in ${divisionName}`
       };
     });
   } catch (error) {
@@ -229,19 +431,19 @@ export async function getSchedule(teamId, season) {
   try {
     // Fetch spring training games
     const springRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
+      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
     );
     const springData = await springRes.json();
 
     // Fetch regular season games
     const regularRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
+      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
     );
     const regularData = await regularRes.json();
 
     // Fetch postseason games
     const postRes = await fetch(
-      `/api/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
+      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
     );
     const postData = await postRes.json();
 

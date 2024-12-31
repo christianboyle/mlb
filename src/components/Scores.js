@@ -1,4 +1,4 @@
-import { getScores, AL_CENTRAL_TEAMS, getTeamRecord } from '../espn.js';
+import { getScores, ALL_TEAMS, getTeamRecord } from '../espn.js';
 import { renderScoresControls, updateSpringTrainingButton } from './ScoresControls.js';
 
 export async function renderScores(teamId, season) {
@@ -16,7 +16,10 @@ export async function renderScores(teamId, season) {
     }
 
     // Get the current team's info
-    const currentTeam = AL_CENTRAL_TEAMS.find(team => team.teamId === teamId);
+    const currentTeam = ALL_TEAMS.find(team => team.teamId === teamId);
+    if (!currentTeam) {
+      throw new Error(`Team not found: ${teamId}`);
+    }
 
     const html = `
       <div>

@@ -1,4 +1,4 @@
-import { AL_CENTRAL_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR } from './espn.js';
+import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR } from './espn.js';
 import { renderScores } from './components/Scores.js';
 import { renderSchedule } from './components/Schedule.js';
 import { renderMobileNav } from './components/MobileNav.js';
@@ -26,11 +26,46 @@ async function renderHome({ teamId, params }) {
 
   const teamSelect = `
     <select 
-      class="appearance-none w-full bg-white dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+      class="appearance-none w-full bg-[#ccc] dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
     >
       <option value="">Select a team</option>
+      <optgroup label="AL East">
+        ${AL_EAST_TEAMS.map(team => `
+          <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
+            ${team.name}
+          </option>
+        `).join('')}
+      </optgroup>
       <optgroup label="AL Central">
         ${AL_CENTRAL_TEAMS.map(team => `
+          <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
+            ${team.name}
+          </option>
+        `).join('')}
+      </optgroup>
+      <optgroup label="AL West">
+        ${AL_WEST_TEAMS.map(team => `
+          <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
+            ${team.name}
+          </option>
+        `).join('')}
+      </optgroup>
+      <optgroup label="NL East">
+        ${NL_EAST_TEAMS.map(team => `
+          <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
+            ${team.name}
+          </option>
+        `).join('')}
+      </optgroup>
+      <optgroup label="NL Central">
+        ${NL_CENTRAL_TEAMS.map(team => `
+          <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
+            ${team.name}
+          </option>
+        `).join('')}
+      </optgroup>
+      <optgroup label="NL West">
+        ${NL_WEST_TEAMS.map(team => `
           <option value="${team.teamId}" ${team.teamId === teamId ? 'selected' : ''}>
             ${team.name}
           </option>
@@ -74,7 +109,7 @@ async function renderHome({ teamId, params }) {
                   ${teamSelect}
                   <select 
                     id="year-select"
-                    class="appearance-none bg-white dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    class="appearance-none bg-[#ccc] dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                     value="${season}"
                   >
                     ${[2024, 2023, 2022, 2021, 2020].map(year => `
@@ -126,7 +161,7 @@ async function renderHome({ teamId, params }) {
 
       // On desktop or if division tab is active, render standings
       if (!tab || tab === 'division') {
-        const standings = await getDivisionStandings(season);
+        const standings = await getDivisionStandings(season, teamId);
         const standingsHtml = `
           <div class="divide-y divide-gray-200 dark:divide-gray-800">
             ${standings.map((team) => `

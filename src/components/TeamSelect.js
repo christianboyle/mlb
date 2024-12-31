@@ -12,7 +12,7 @@ export function renderTeamSelect(teams, selectedTeamId) {
     </p>
     <div class="relative">
       <select 
-        class="w-full appearance-none bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 pr-8 text-sm"
+        class="w-full appearance-none bg-[#ccc] dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 pr-8 text-sm"
         id="team-dropdown"
       >
         <option value="" ${!selectedTeamId ? 'selected' : ''}>Select a team...</option>
