@@ -515,4 +515,44 @@ export async function getSchedule(teamId, season) {
     console.error('Error fetching schedule:', error);
     return { events: [] };
   }
-} 
+}
+
+// Helper function to convert team name to URL slug
+export function teamNameToSlug(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+// Helper function to get team by slug
+export function getTeamBySlug(slug) {
+  return ALL_TEAMS.find(team => teamNameToSlug(team.name) === slug);
+}
+
+// Helper function to get team by ID
+export function getTeamById(id) {
+  return ALL_TEAMS.find(team => team.teamId === id);
+}
+
+// Add slug to each team
+AL_EAST_TEAMS.forEach(team => {
+  team.slug = teamNameToSlug(team.name);
+});
+
+AL_CENTRAL_TEAMS.forEach(team => {
+  team.slug = teamNameToSlug(team.name);
+});
+
+AL_WEST_TEAMS.forEach(team => {
+  team.slug = teamNameToSlug(team.name);
+});
+
+NL_EAST_TEAMS.forEach(team => {
+  team.slug = teamNameToSlug(team.name);
+});
+
+NL_CENTRAL_TEAMS.forEach(team => {
+  team.slug = teamNameToSlug(team.name);
+});
+
+NL_WEST_TEAMS.forEach(team => {
+  team.slug = teamNameToSlug(team.name);
+}); 

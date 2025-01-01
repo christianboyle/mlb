@@ -1,4 +1,5 @@
 import { Router } from '../router.js';
+import { getTeamById } from '../espn.js';
 
 const router = new Router();
 
@@ -40,7 +41,8 @@ export function renderTeamSelect(teams, selectedTeamId) {
   dropdown.addEventListener('change', (e) => {
     const teamId = e.target.value;
     if (teamId) {
-      router.navigate(`/${teamId}`);
+      const team = getTeamById(teamId);
+      router.navigate(`/${team.slug}`);
     } else {
       router.navigate('/');
     }

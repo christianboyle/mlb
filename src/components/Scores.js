@@ -1,4 +1,4 @@
-import { getScores, ALL_TEAMS, getTeamRecord } from '../espn.js';
+import { getScores, ALL_TEAMS, getTeamRecord, getTeamById } from '../espn.js';
 import { renderScoresControls, updateSpringTrainingButton } from './ScoresControls.js';
 
 export async function renderScores(teamId, season) {
@@ -106,6 +106,8 @@ export async function renderScores(teamId, season) {
             const isHome = selectedTeam.homeAway === 'home';
             
             const displayTeam = opposingTeam;
+            // Get full team info to access slug
+            const displayTeamInfo = getTeamById(displayTeam.team.id);
             
             const score = isHome 
               ? `${opposingTeam.score}-${selectedTeam.score}`
@@ -126,7 +128,7 @@ export async function renderScores(teamId, season) {
                     width="20"
                     height="20"
                   />
-                  <a class="font-semibold ml-4" href="/${displayTeam.team.id}">${displayTeam.team.name}</a>
+                  <a class="font-semibold ml-4" href="/${displayTeamInfo?.slug || ''}">${displayTeam.team.name}</a>
                 </div>
                 <div class="flex items-center gap-4">
                   <p class="text-gray-700 dark:text-gray-300 tabular-nums">${score}</p>
@@ -143,29 +145,36 @@ export async function renderScores(teamId, season) {
       `;
 
       document.getElementById('games-list').innerHTML = gamesHtml;
-    };
-
-    // Add event listeners
-    document.getElementById('spring-training-toggle').addEventListener('click', (e) => {
-      const button = e.currentTarget;
-      const newEnabled = button.dataset.enabled !== 'true';
-      updateSpringTrainingButton(newEnabled);
-      renderFilteredGames();
-    });
-
-    document.getElementById('date-sort-toggle').addEventListener('click', (e) => {
-      const button = e.currentTarget;
-      const newSort = button.dataset.sort === 'desc' ? 'asc' : 'desc';
-      button.dataset.sort = newSort;
-      renderFilteredGames();
-    });
+    }
 
     // Initial render
-    updateSpringTrainingButton(false);
     renderFilteredGames();
 
+    // Add event listeners for controls
+    const springTrainingToggle = document.getElementById('spring-training-toggle');
+    const dateSortToggle = document.getElementById('date-sort-toggle');
+
+    springTrainingToggle.addEventListener('click', () => {
+      const isEnabled = springTrainingToggle.dataset.enabled === 'true';
+      springTrainingToggle.dataset.enabled = (!isEnabled).toString();
+      updateSpringTrainingButton(!isEnabled);
+      renderFilteredGames();
+    });
+
+    dateSortToggle.addEventListener('click', () => {
+      const currentSort = dateSortToggle.dataset.sort;
+      const newSort = currentSort === 'desc' ? 'asc' : 'desc';
+      dateSortToggle.dataset.sort = newSort;
+      
+      // Update icon rotation
+      const icon = dateSortToggle.querySelector('svg');
+      icon.style.transform = newSort === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)';
+      
+      renderFilteredGames();
+    });
+
   } catch (error) {
-    console.error('Error loading scores:', error);
-    scoresContainer.innerHTML = '<div class="mt-6 text-red-500">Error loading scores</div>';
+    console.error('Error rendering scores:', error);
+    scoresContainer.innerHTML = '<div class="text-red-500">Error loading scores</div>';
   }
 } 

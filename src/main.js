@@ -1,4 +1,4 @@
-import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR } from './espn.js';
+import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR, ALL_TEAMS, getTeamById, getTeamBySlug } from './espn.js';
 import { renderScores } from './components/Scores.js';
 import { renderSchedule } from './components/Schedule.js';
 import { renderMobileNav } from './components/MobileNav.js';
@@ -166,28 +166,31 @@ async function renderHome({ teamId, params }) {
         const standings = await getDivisionStandings(season, teamId);
         const standingsHtml = `
           <div class="divide-y divide-gray-200 dark:divide-gray-800">
-            ${standings.map((team) => `
-              <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800">
-                <div class="flex items-center">
-                  <img 
-                    src="${team.logo}"
-                    alt="${team.name}"
-                    class="h-5 w-5 ${team.color === '000000' ? 'dark:invert' : ''}"
-                    width="20"
-                    height="20"
-                  />
-                  <a href="/${team.id}" class="font-semibold ml-4">${team.name}</a>
+            ${standings.map((team) => {
+              const teamInfo = getTeamById(team.id);
+              return `
+                <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800">
+                  <div class="flex items-center">
+                    <img 
+                      src="${team.logo}"
+                      alt="${team.name}"
+                      class="h-5 w-5 ${team.color === '000000' ? 'dark:invert' : ''}"
+                      width="20"
+                      height="20"
+                    />
+                    <a href="/${teamInfo?.slug || ''}" class="font-semibold ml-4">${team.name}</a>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <p class="text-gray-700 dark:text-gray-300 tabular-nums">
+                      ${team.record}
+                    </p>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">
+                      ${team.standingSummary}
+                    </p>
+                  </div>
                 </div>
-                <div class="flex items-center gap-4">
-                  <p class="text-gray-700 dark:text-gray-300 tabular-nums">
-                    ${team.record}
-                  </p>
-                  <p class="text-gray-500 dark:text-gray-400 text-sm">
-                    ${team.standingSummary}
-                  </p>
-                </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         `;
         document.getElementById('standings').innerHTML = standingsHtml;
@@ -199,12 +202,13 @@ async function renderHome({ teamId, params }) {
     if (select) {
       select.addEventListener('change', (e) => {
         if (e.target.value) {
+          const selectedTeam = ALL_TEAMS.find(team => team.teamId === e.target.value);
           const isMobile = window.innerWidth < 640; // sm breakpoint
           if (isMobile) {
-            window.location.href = `/${e.target.value}?tab=scores`;
+            window.location.href = `/${selectedTeam.slug}?tab=scores`;
           } else {
             // On desktop, just load the team without a tab parameter
-            window.location.href = `/${e.target.value}`;
+            window.location.href = `/${selectedTeam.slug}`;
           }
         } else {
           window.location.href = '/';
@@ -217,9 +221,10 @@ async function renderHome({ teamId, params }) {
     if (yearSelect) {
       yearSelect.addEventListener('change', (e) => {
         const newSeason = e.target.value;
+        const team = getTeamById(teamId);
         // Only include season parameter if we're in scores or division tab
         const seasonParam = tab === 'schedule' ? '' : `&season=${newSeason}`;
-        window.location.href = `/${teamId}?tab=${tab}${seasonParam}`;
+        window.location.href = `/${team?.slug || ''}?tab=${tab}${seasonParam}`;
       });
     }
   }, 0);
@@ -227,7 +232,7 @@ async function renderHome({ teamId, params }) {
 
 // Add routes
 router.addRoute('/', renderHome);
-router.addRoute('/:teamId', renderHome);
+router.addRoute('/:teamSlug', renderHome);
 
 // Initial route handling
 router.handleRoute();
@@ -241,15 +246,16 @@ window.addEventListener('resize', () => {
     wasMobile = isMobile;
     const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
-    const teamId = path === '/' ? null : path.slice(1);
+    const slug = path === '/' ? null : path.slice(1);
+    const team = slug ? getTeamBySlug(slug) : null;
     
-    if (teamId) {
+    if (team) {
       if (isMobile && !params.get('tab')) {
         // Add tab=scores when entering mobile breakpoint
-        router.navigate(`/${teamId}?tab=scores`, true);
+        router.navigate(`/${team.slug}?tab=scores`, true);
       } else if (!isMobile && params.get('tab')) {
         // Remove tab parameter when entering desktop breakpoint
-        router.navigate(`/${teamId}`, true);
+        router.navigate(`/${team.slug}`, true);
       }
     }
   }

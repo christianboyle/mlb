@@ -1,3 +1,5 @@
+import { getTeamBySlug } from './espn.js';
+
 export class Router {
   constructor() {
     this.routes = new Map();
@@ -28,13 +30,22 @@ export class Router {
     // Find matching route handler
     let handler = this.routes.get(path);
     
-    // If no exact match, try to match pattern with :teamId
-    if (!handler && path.match(/^\/\d+$/)) {
-      handler = this.routes.get('/:teamId');
+    // If no exact match, try to match pattern with :teamSlug
+    if (!handler && path !== '/') {
+      handler = this.routes.get('/:teamSlug');
     }
 
     if (handler) {
-      const teamId = path === '/' ? null : path.slice(1);
+      const slug = path === '/' ? null : path.slice(1);
+      const team = slug ? getTeamBySlug(slug) : null;
+      const teamId = team?.teamId || null;
+      
+      if (slug && !team) {
+        // Team not found - redirect to home
+        this.navigate('/', true);
+        return;
+      }
+
       await handler({ teamId, params });
 
       // Update active state in mobile nav based on tab

@@ -1,4 +1,4 @@
-import { getSchedule } from '../espn.js';
+import { getSchedule, getTeamById } from '../espn.js';
 import { renderScheduleControls, updateScheduleSpringTrainingButton } from './ScheduleControls.js';
 
 export async function renderSchedule(teamId, season) {
@@ -30,6 +30,9 @@ export async function renderSchedule(teamId, season) {
             const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const isHome = selectedTeam.homeAway === 'home';
             
+            // Get full team info to access slug
+            const opposingTeamInfo = getTeamById(opposingTeam.team.id);
+            
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
                 game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : ''
@@ -43,7 +46,7 @@ export async function renderSchedule(teamId, season) {
                     width="20"
                     height="20"
                   />
-                  <a class="font-semibold ml-4" href="/${opposingTeam.team.id}">
+                  <a class="font-semibold ml-4" href="/${opposingTeamInfo?.slug || ''}">
                     ${opposingTeam.team.name}
                   </a>
                 </div>
