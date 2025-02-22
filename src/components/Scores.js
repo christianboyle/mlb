@@ -10,85 +10,52 @@ export async function renderScores(teamId, season) {
     const data = await getScores(teamId, season);
     const teamData = await getTeamRecord(teamId, season);
     
-    if (!data.events || data.events.length === 0) {
-      scoresContainer.innerHTML = '<div class="mt-6">No games scheduled.</div>';
-      return;
-    }
-
     // Get the current team's info
     const currentTeam = ALL_TEAMS.find(team => team.teamId === teamId);
     if (!currentTeam) {
       throw new Error(`Team not found: ${teamId}`);
     }
 
-    const html = `
-      <div>
-        <!-- Team Header -->
-        <div class="flex items-center mb-2">
-          <img 
-            alt="Logo"
-            src="${currentTeam.logo}"
-            class="h-6 w-6"
-            width="24"
-            height="24"
-          />
-          <h1 class="font-semibold text-2xl ml-2">${currentTeam.name}</h1>
-        </div>
-
-        <!-- Team Record -->
-        <h3 class="text-gray-700 dark:text-gray-300 mb-4">${teamData.record} • ${teamData.standing}</h3>
-
-        <!-- Controls -->
-        <div class="flex items-center justify-between mb-4">
-          <div class="text-sm text-gray-500">
-            ${data.events.length} Games
-          </div>
-          ${renderScoresControls()}
-        </div>
-
-        <!-- Games List -->
-        <div id="games-list">
-          <!-- Games will be rendered here -->
-        </div>
-      </div>
-    `;
-
-    scoresContainer.innerHTML = html;
-
     // Filter functions
     const filterBySeasonType = (events, showSpringTraining) => {
-      if (showSpringTraining) {
-        // Show all games in chronological order
-        return events;
+      if (!events || events.length === 0) return [];
+      
+      // First filter out upcoming games (no winner set)
+      const completedGames = events.filter(e => e.competitions?.competitors?.some(c => c.winner !== undefined));
+      
+      // For 2025, only show spring training games
+      if (season === 2025) {
+        return showSpringTraining ? completedGames.filter(e => e.isSpringTraining) : [];
       }
-      // Hide spring training games, keep everything else
-      return events.filter(e => !e.isSpringTraining);
+      
+      // For other years, show all games except spring training unless enabled
+      if (showSpringTraining) {
+        return completedGames;
+      }
+      return completedGames.filter(e => !e.isSpringTraining);
     };
 
-    // Initial render with all events
-    let filteredEvents = [...data.events];
+    // Check if we have spring training games
+    const hasSpringTraining = data.events?.some(e => e.isSpringTraining);
 
-    const renderFilteredGames = () => {
-      const springTrainingEnabled = document.getElementById('spring-training-toggle').dataset.enabled === 'true';
-      const sortDirection = document.getElementById('date-sort-toggle').dataset.sort;
-      
-      // First filter the events
-      filteredEvents = filterBySeasonType(data.events, springTrainingEnabled);
-      
-      // Then sort them
-      filteredEvents.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
-      });
-      
-      // Update game count
-      document.querySelector('.text-gray-500').textContent = `${filteredEvents.length} Games`;
-      
-      renderGamesList();
-    };
+    // Initialize spring training state - default to false for all years
+    let showSpringTraining = false;
+
+    // Initial render with filtered events
+    let filteredEvents = filterBySeasonType(data.events, showSpringTraining);
 
     const renderGamesList = () => {
+      const gamesListContainer = document.getElementById('games-list');
+      if (!gamesListContainer) return;
+
+      // For 2025 or when no filtered events, show empty state
+      if ((season === 2025 && !showSpringTraining) || filteredEvents.length === 0) {
+        gamesListContainer.innerHTML = '<div class="mt-6 text-gray-600 dark:text-gray-400">Opening Day is on Thursday, March 27.</div>';
+        const gamesCount = document.querySelector('.text-gray-500');
+        if (gamesCount) gamesCount.textContent = '0 Games';
+        return;
+      }
+
       const gamesHtml = `
         <div class="divide-y divide-gray-200 dark:divide-gray-800">
           ${filteredEvents.map(game => {
@@ -133,10 +100,12 @@ export async function renderScores(teamId, season) {
                 <div class="flex items-center gap-4">
                   <p class="text-gray-700 dark:text-gray-300 tabular-nums">${score}</p>
                   <p class="font-semibold w-5 text-center ${
-                    isWin 
+                    selectedTeam.winner === true
                       ? 'text-green-700 dark:text-green-500'
-                      : 'text-red-700 dark:text-red-500'
-                  }">${isWin ? 'W' : 'L'}</p>
+                      : selectedTeam.winner === false
+                        ? 'text-red-700 dark:text-red-500'
+                        : 'text-gray-500 dark:text-gray-400'
+                  }">${selectedTeam.winner === true ? 'W' : selectedTeam.winner === false ? 'L' : '-'}</p>
                 </div>
               </div>
             `;
@@ -144,34 +113,99 @@ export async function renderScores(teamId, season) {
         </div>
       `;
 
-      document.getElementById('games-list').innerHTML = gamesHtml;
-    }
+      gamesListContainer.innerHTML = gamesHtml;
+      const gamesCount = document.querySelector('.text-gray-500');
+      if (gamesCount) gamesCount.textContent = `${filteredEvents.length} Games`;
+    };
 
-    // Initial render
-    renderFilteredGames();
+    const html = `
+      <div>
+        <!-- Team Header -->
+        <div class="flex items-center mb-2">
+          <img 
+            alt="Logo"
+            src="${currentTeam.logo}"
+            class="h-6 w-6"
+            width="24"
+            height="24"
+          />
+          <h1 class="font-semibold text-2xl ml-2">${currentTeam.name}</h1>
+        </div>
+
+        <!-- Team Record -->
+        <h3 class="text-gray-700 dark:text-gray-300 mb-4">${teamData.record} • ${teamData.standing}</h3>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-sm text-gray-500">
+            ${filteredEvents.length} Games
+          </div>
+          ${renderScoresControls()}
+        </div>
+
+        <!-- Games List -->
+        <div id="games-list"></div>
+      </div>
+    `;
+
+    scoresContainer.innerHTML = html;
 
     // Add event listeners for controls
     const springTrainingToggle = document.getElementById('spring-training-toggle');
     const dateSortToggle = document.getElementById('date-sort-toggle');
 
-    springTrainingToggle.addEventListener('click', () => {
-      const isEnabled = springTrainingToggle.dataset.enabled === 'true';
-      springTrainingToggle.dataset.enabled = (!isEnabled).toString();
-      updateSpringTrainingButton(!isEnabled);
-      renderFilteredGames();
-    });
+    // Initialize controls
+    if (springTrainingToggle && hasSpringTraining) {
+      springTrainingToggle.classList.remove('hidden');
+      springTrainingToggle.dataset.enabled = showSpringTraining.toString();
+      updateSpringTrainingButton(showSpringTraining);
+      
+      springTrainingToggle.addEventListener('click', () => {
+        showSpringTraining = !showSpringTraining;
+        springTrainingToggle.dataset.enabled = showSpringTraining.toString();
+        updateSpringTrainingButton(showSpringTraining);
+        
+        // Update filtered events
+        filteredEvents = filterBySeasonType(data.events, showSpringTraining);
+        
+        // Sort events if we have any
+        if (filteredEvents.length > 0) {
+          const sortDirection = dateSortToggle?.dataset.sort || 'asc';
+          filteredEvents.sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+          });
+        }
+        
+        renderGamesList();
+      });
+    }
 
-    dateSortToggle.addEventListener('click', () => {
-      const currentSort = dateSortToggle.dataset.sort;
-      const newSort = currentSort === 'desc' ? 'asc' : 'desc';
-      dateSortToggle.dataset.sort = newSort;
-      
-      // Update icon rotation
-      const icon = dateSortToggle.querySelector('svg');
-      icon.style.transform = newSort === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)';
-      
-      renderFilteredGames();
-    });
+    if (dateSortToggle) {
+      dateSortToggle.dataset.sort = 'asc';
+      dateSortToggle.addEventListener('click', () => {
+        const currentSort = dateSortToggle.dataset.sort;
+        const newSort = currentSort === 'desc' ? 'asc' : 'desc';
+        dateSortToggle.dataset.sort = newSort;
+        
+        // Update icon rotation
+        const icon = dateSortToggle.querySelector('svg');
+        icon.style.transform = newSort === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)';
+        
+        // Sort events
+        filteredEvents.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return newSort === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+        
+        renderGamesList();
+      });
+    }
+
+    // Always render games list
+    renderGamesList();
 
   } catch (error) {
     console.error('Error rendering scores:', error);

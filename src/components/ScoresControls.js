@@ -3,7 +3,7 @@ export function renderScoresControls() {
     <div class="flex items-center gap-4">
       <button 
         id="spring-training-toggle"
-        class="text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-gray-500 dark:text-gray-400"
+        class="text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 text-gray-500 dark:text-gray-400 hidden"
         data-enabled="false"
       >
         Spring Training
@@ -18,10 +18,10 @@ export function renderScoresControls() {
       <button 
         id="date-sort-toggle"
         class="inline-flex items-center gap-2 px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100"
-        data-sort="desc"
+        data-sort="asc"
       >
         Date
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-down h-4 w-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-down h-4 w-4" style="transform: rotate(180deg)">
           <path d="m21 16-4 4-4-4"></path>
           <path d="M17 20V4"></path>
           <path d="m3 8 4-4 4 4"></path>
@@ -36,7 +36,8 @@ export function updateSpringTrainingButton(enabled) {
   const button = document.getElementById('spring-training-toggle');
   if (!button) return;
 
-  button.dataset.enabled = enabled;
+  button.classList.remove('hidden');
+  button.dataset.enabled = enabled.toString();
   button.className = `text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2 ${
     enabled ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'
   }`;

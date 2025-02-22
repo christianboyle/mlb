@@ -205,7 +205,7 @@ export const ALL_TEAMS = [
   ...NL_WEST_TEAMS
 ];
 
-export const CURRENT_SEASON = 2024;
+export const CURRENT_SEASON = 2025;
 export const DISPLAY_YEAR = 2025;
 
 // Helper function to fetch games by season type
@@ -219,6 +219,41 @@ async function fetchGames(teamId, season, type) {
 
 export async function getScores(teamId, season) {
   try {
+    // For 2025, only fetch spring training games
+    if (season === 2025) {
+      const springRes = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
+      );
+      const springData = await springRes.json();
+
+      return {
+        events: [
+          // Spring Training games
+          ...(springData.events?.map(event => ({
+            id: event.id,
+            name: event.name,
+            date: new Date(event.date),
+            status: event.status?.type?.name,
+            isPostseason: false,
+            isSpringTraining: true,
+            competitions: event.competitions?.map(comp => ({
+              competitors: comp.competitors?.map(team => ({
+                score: team.score?.displayValue || '-',
+                winner: team.winner,
+                homeAway: team.homeAway,
+                team: {
+                  name: team.team?.displayName || team.team?.name,
+                  logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                  id: team.team?.id
+                }
+              }))
+            }))?.[0]
+          })) || [])
+        ]
+      };
+    }
+
+    // For other seasons, fetch all game types
     // Fetch spring training games
     const springRes = await fetch(
       `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
