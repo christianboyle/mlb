@@ -36,7 +36,7 @@ export async function renderSchedule(teamId, season) {
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
                 game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : ''
-              }" ${game.isSpringTraining ? 'style="display: none;"' : ''}>
+              }" ${game.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
                 <div class="flex items-center">
                   <div class="w-14 text-sm text-gray-600 dark:text-gray-400">${formattedDate}</div>
                   <img 
@@ -96,8 +96,8 @@ export async function renderSchedule(teamId, season) {
       });
     }
 
-    // Initial state - hide spring training games
-    updateScheduleSpringTrainingButton(false);
+    // Initial state - show spring training games for 2025, hide for other years
+    updateScheduleSpringTrainingButton(season === 2025);
 
   } catch (error) {
     console.error('Error rendering schedule:', error);

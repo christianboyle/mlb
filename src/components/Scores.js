@@ -38,8 +38,8 @@ export async function renderScores(teamId, season) {
     // Check if we have spring training games
     const hasSpringTraining = data.events?.some(e => e.isSpringTraining);
 
-    // Initialize spring training state - default to false for all years
-    let showSpringTraining = false;
+    // Initialize spring training state - default to true for 2025, false otherwise
+    let showSpringTraining = season === 2025;
 
     // Initial render with filtered events
     let filteredEvents = filterBySeasonType(data.events, showSpringTraining);

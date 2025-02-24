@@ -226,6 +226,9 @@ export async function getScores(teamId, season) {
       );
       const springData = await springRes.json();
 
+      // Initialize spring training state - default to true for 2025 during spring training
+      let showSpringTraining = true;
+
       return {
         events: [
           // Spring Training games
@@ -394,6 +397,44 @@ export async function getScores(teamId, season) {
 
 export async function getTeamRecord(teamId, season) {
   try {
+    // For 2025 or if we're in spring training, show spring training record
+    if (season === 2025) {
+      const springRes = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
+      );
+      const springData = await springRes.json();
+
+      // Calculate spring training record
+      let wins = 0;
+      let losses = 0;
+      let ties = 0;
+
+      springData.events?.forEach(event => {
+        const teamInGame = event.competitions?.[0]?.competitors?.find(
+          c => c.team?.id === teamId
+        );
+        const otherTeam = event.competitions?.[0]?.competitors?.find(
+          c => c.team?.id !== teamId
+        );
+
+        if (teamInGame && otherTeam) {
+          // Check for tie - both teams have same score and winner: false
+          const isTie = teamInGame.score?.value === otherTeam.score?.value && 
+                       teamInGame.winner === false && 
+                       otherTeam.winner === false;
+
+          if (isTie) ties++;
+          else if (teamInGame.winner === true) wins++;
+          else if (teamInGame.winner === false) losses++;
+        }
+      });
+
+      return {
+        record: `${wins}-${losses}${ties > 0 ? `-${ties}` : ''}`,
+        standing: 'Spring Training'
+      };
+    }
+
     // Get all division standings to determine position
     const standings = await getDivisionStandings(season, teamId);
     const teamStanding = standings.find(team => team.id === teamId);
