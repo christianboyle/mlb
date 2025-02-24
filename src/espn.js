@@ -236,18 +236,25 @@ export async function getScores(teamId, season) {
             status: event.status?.type?.name,
             isPostseason: false,
             isSpringTraining: true,
-            competitions: event.competitions?.map(comp => ({
-              competitors: comp.competitors?.map(team => ({
-                score: team.score?.displayValue || '-',
-                winner: team.winner,
-                homeAway: team.homeAway,
-                team: {
-                  name: team.team?.displayName || team.team?.name,
-                  logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
-                  id: team.team?.id
-                }
-              }))
-            }))?.[0]
+            competitions: event.competitions?.map(comp => {
+              // Check for ties - equal scores and both teams have winner: false
+              const scores = comp.competitors?.map(t => t.score?.value);
+              const allWinnersFalse = comp.competitors?.every(t => t.winner === false);
+              const isTie = scores?.length === 2 && scores[0] === scores[1] && allWinnersFalse;
+
+              return {
+                competitors: comp.competitors?.map(team => ({
+                  score: team.score?.displayValue || '-',
+                  winner: isTie ? null : team.winner,
+                  homeAway: team.homeAway,
+                  team: {
+                    name: team.team?.displayName || team.team?.name,
+                    logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                    id: team.team?.id
+                  }
+                }))
+              };
+            })?.[0]
           })) || [])
         ]
       };
@@ -293,18 +300,25 @@ export async function getScores(teamId, season) {
           status: event.status?.type?.name,
           isPostseason: false,
           isSpringTraining: true,
-          competitions: event.competitions?.map(comp => ({
-            competitors: comp.competitors?.map(team => ({
-              score: team.score?.displayValue || '-',
-              winner: team.winner,
-              homeAway: team.homeAway,
-              team: {
-                name: team.team?.displayName || team.team?.name,
-                logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
-                id: team.team?.id
-              }
-            }))
-          }))?.[0]
+          competitions: event.competitions?.map(comp => {
+            // Check for ties - equal scores and both teams have winner: false
+            const scores = comp.competitors?.map(t => t.score?.value);
+            const allWinnersFalse = comp.competitors?.every(t => t.winner === false);
+            const isTie = scores?.length === 2 && scores[0] === scores[1] && allWinnersFalse;
+
+            return {
+              competitors: comp.competitors?.map(team => ({
+                score: team.score?.displayValue || '-',
+                winner: isTie ? null : team.winner,
+                homeAway: team.homeAway,
+                team: {
+                  name: team.team?.displayName || team.team?.name,
+                  logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                  id: team.team?.id
+                }
+              }))
+            };
+          })?.[0]
         })) || []),
         // Regular Season games
         ...(regularData.events?.map(event => ({
@@ -315,18 +329,25 @@ export async function getScores(teamId, season) {
           isPostseason: false,
           isSpringTraining: false,
           isDoubleHeader: gamesByDate[new Date(event.date).toLocaleDateString()].length > 1,
-          competitions: event.competitions?.map(comp => ({
-            competitors: comp.competitors?.map(team => ({
-              score: team.score?.displayValue || '-',
-              winner: team.winner,
-              homeAway: team.homeAway,
-              team: {
-                name: team.team?.displayName || team.team?.name,
-                logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
-                id: team.team?.id
-              }
-            }))
-          }))?.[0]
+          competitions: event.competitions?.map(comp => {
+            // Check for ties - equal scores and both teams have winner: false
+            const scores = comp.competitors?.map(t => t.score?.value);
+            const allWinnersFalse = comp.competitors?.every(t => t.winner === false);
+            const isTie = scores?.length === 2 && scores[0] === scores[1] && allWinnersFalse;
+
+            return {
+              competitors: comp.competitors?.map(team => ({
+                score: team.score?.displayValue || '-',
+                winner: isTie ? null : team.winner,
+                homeAway: team.homeAway,
+                team: {
+                  name: team.team?.displayName || team.team?.name,
+                  logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                  id: team.team?.id
+                }
+              }))
+            };
+          })?.[0]
         })) || []),
         // Postseason games
         ...(postData.events?.map(event => ({
@@ -336,18 +357,25 @@ export async function getScores(teamId, season) {
           status: event.status?.type?.name,
           isPostseason: true,
           isSpringTraining: false,
-          competitions: event.competitions?.map(comp => ({
-            competitors: comp.competitors?.map(team => ({
-              score: team.score?.displayValue || '-',
-              winner: team.winner,
-              homeAway: team.homeAway,
-              team: {
-                name: team.team?.displayName || team.team?.name,
-                logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
-                id: team.team?.id
-              }
-            }))
-          }))?.[0]
+          competitions: event.competitions?.map(comp => {
+            // Check for ties - equal scores and both teams have winner: false
+            const scores = comp.competitors?.map(t => t.score?.value);
+            const allWinnersFalse = comp.competitors?.every(t => t.winner === false);
+            const isTie = scores?.length === 2 && scores[0] === scores[1] && allWinnersFalse;
+
+            return {
+              competitors: comp.competitors?.map(team => ({
+                score: team.score?.displayValue || '-',
+                winner: isTie ? null : team.winner,
+                homeAway: team.homeAway,
+                team: {
+                  name: team.team?.displayName || team.team?.name,
+                  logo: team.team?.logo || `https://a.espncdn.com/i/teamlogos/mlb/500/${team.team?.abbreviation?.toLowerCase()}.png`,
+                  id: team.team?.id
+                }
+              }))
+            };
+          })?.[0]
         })) || [])
       ]
         // Remove duplicates based on event ID

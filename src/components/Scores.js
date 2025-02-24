@@ -104,8 +104,10 @@ export async function renderScores(teamId, season) {
                       ? 'text-green-700 dark:text-green-500'
                       : selectedTeam.winner === false
                         ? 'text-red-700 dark:text-red-500'
-                        : 'text-gray-500 dark:text-gray-400'
-                  }">${selectedTeam.winner === true ? 'W' : selectedTeam.winner === false ? 'L' : '-'}</p>
+                        : selectedTeam.winner === null
+                          ? 'text-gray-500 dark:text-gray-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                  }">${selectedTeam.winner === true ? 'W' : selectedTeam.winner === false ? 'L' : selectedTeam.winner === null ? 'T' : '-'}</p>
                 </div>
               </div>
             `;
