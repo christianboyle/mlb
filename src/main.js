@@ -134,7 +134,7 @@ async function renderHome({ teamId, params }) {
             '<p class="text-gray-600 dark:text-gray-400">Select a team to view schedule</p>'}
         </section>
         <section class="w-full mx-auto p-6 ${tab !== 'division' ? 'sm:block hidden' : ''}">
-          <h2 class="font-semibold text-2xl mb-4">Division Standings <span class="text-gray-500 dark:text-gray-400 text-lg">• ${season}</span></h2>
+          <h2 class="font-semibold text-2xl mb-4">Division Standings <span id="division-name-header" class="text-gray-500 dark:text-gray-400 text-lg"></span></h2>
           ${teamId ? '<div id="standings"></div>' : 
             '<p class="text-gray-600 dark:text-gray-400">Select a team to view standings</p>'}
         </section>
@@ -163,37 +163,23 @@ async function renderHome({ teamId, params }) {
 
       // On desktop or if division tab is active, render standings
       if (!tab || tab === 'division') {
-        const standings = await getDivisionStandings(season, teamId);
+        // Simple standings HTML without toggle
         const standingsHtml = `
-          <div class="divide-y divide-gray-200 dark:divide-gray-800">
-            ${standings.map((team) => {
-              const teamInfo = getTeamById(team.id);
-              return `
-                <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800">
-                  <div class="flex items-center">
-                    <img 
-                      src="${team.logo}"
-                      alt="${team.name}"
-                      class="h-5 w-5 ${team.color === '000000' ? 'dark:invert' : ''}"
-                      width="20"
-                      height="20"
-                    />
-                    <a href="/${teamInfo?.slug || ''}" class="font-semibold ml-4">${team.name}</a>
-                  </div>
-                  <div class="flex items-center gap-4">
-                    <p class="text-gray-700 dark:text-gray-300 tabular-nums">
-                      ${team.record}
-                    </p>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">
-                      ${team.standingSummary}
-                    </p>
-                  </div>
-                </div>
-              `;
-            }).join('')}
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div id="standings-count" class="text-sm text-gray-500"></div>
+            </div>
+            <div id="standings-list" class="divide-y divide-gray-200 dark:divide-gray-800"></div>
           </div>
         `;
         document.getElementById('standings').innerHTML = standingsHtml;
+        
+        // For 2025 always show spring training standings, otherwise show regular season
+        // Make sure we're converting to string for comparison
+        const showSpringTraining = season.toString() === '2025' ? true : false;
+        
+        // Render standings with appropriate type
+        await renderDivisionStandings(teamId, season, showSpringTraining);
       }
     }
 
@@ -261,4 +247,75 @@ window.addEventListener('resize', () => {
       }
     }
   }
-}); 
+});
+
+// Function to render division standings
+async function renderDivisionStandings(teamId, season, showSpringTraining) {
+  const standingsList = document.getElementById('standings-list');
+  if (!standingsList) return;
+  
+  // Force spring training for 2025
+  if (season.toString() === '2025') {
+    showSpringTraining = true;
+  }
+  
+  standingsList.innerHTML = '<div class="mt-6">Loading standings...</div>';
+  
+  try {
+    // Normal flow - use the getDivisionStandings function
+    const standings = await getDivisionStandings(season, teamId, showSpringTraining);
+    
+    // Get division name from the first team
+    const divisionName = standings.length > 0 ? 
+      standings[0].standingSummary.split(' in ')[1] : '';
+    
+    // Update the division name in the header
+    const divisionNameHeader = document.getElementById('division-name-header');
+    if (divisionNameHeader && divisionName) {
+      divisionNameHeader.innerHTML = `• ${divisionName}`;
+    }
+    
+    // Update standings count if element exists
+    const standingsCount = document.getElementById('standings-count');
+    if (standingsCount) {
+      const standingsType = showSpringTraining ? 'Spring Training' : 'Regular Season';
+      standingsCount.innerHTML = `<div>${standingsType} Standings</div>`;
+    }
+    
+    const standingsHtml = standings.map((team) => {
+      const teamInfo = getTeamById(team.id);
+      return `
+        <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800">
+          <div class="flex items-center">
+            <img 
+              src="${team.logo}"
+              alt="${team.name}"
+              class="h-5 w-5 ${team.color === '000000' ? 'dark:invert' : ''}"
+              width="20"
+              height="20"
+            />
+            <a href="/${teamInfo?.slug || ''}" class="font-semibold ml-4">${team.name}</a>
+          </div>
+          <div class="flex items-center gap-4">
+            <p class="text-gray-700 dark:text-gray-300 tabular-nums">
+              ${team.record}
+            </p>
+            <p class="px-2 py-0.5 rounded-md font-medium text-xs min-w-[36px] text-center ${
+              team.standingSummary.startsWith('1st') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+              team.standingSummary.startsWith('2nd') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+              team.standingSummary.startsWith('3rd') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+            }">
+              ${team.standingSummary.split(' in ')[0]}
+            </p>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    standingsList.innerHTML = standingsHtml || '<div class="mt-6 text-gray-600 dark:text-gray-400">No standings available.</div>';
+  } catch (error) {
+    console.error('Error rendering standings:', error);
+    standingsList.innerHTML = '<div class="text-red-500">Error loading standings</div>';
+  }
+} 

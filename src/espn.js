@@ -397,10 +397,13 @@ export async function getScores(teamId, season) {
 
 export async function getTeamRecord(teamId, season) {
   try {
+    // Convert season to a number for consistent comparison
+    const seasonNum = parseInt(season);
+    
     // For 2025 or if we're in spring training, show spring training record
-    if (season === 2025) {
+    if (seasonNum === 2025) {
       const springRes = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${seasonNum}&seasontype=1`
       );
       const springData = await springRes.json();
 
@@ -452,8 +455,11 @@ export async function getTeamRecord(teamId, season) {
   }
 }
 
-export async function getDivisionStandings(season, teamId) {
+export async function getDivisionStandings(season, teamId, showSpringTraining = false) {
   try {
+    // Convert season to a number for comparison
+    const seasonNum = parseInt(season);
+    
     // Determine which division the team belongs to
     let divisionTeams;
     let divisionName;
@@ -480,35 +486,91 @@ export async function getDivisionStandings(season, teamId) {
       throw new Error('Team not found in any division');
     }
 
-    // Fetch each team's data to get their standings
+    // For 2025 and spring training toggle on, show spring training standings
+    // Make sure showSpringTraining is true for 2025
+    const shouldShowSpringTraining = (seasonNum === 2025) ? showSpringTraining : false;
+    
+    // Fetch each team's record
     const teamPromises = divisionTeams.map(async (team) => {
-      // Fetch regular season games for record
-      const scheduleRes = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${team.teamId}/schedule?season=${season}&seasontype=2`
-      );
-      const scheduleData = await scheduleRes.json();
-      
-      // Calculate record from regular season games
-      let wins = 0;
-      let losses = 0;
-      scheduleData.events?.forEach(event => {
-        const teamInGame = event.competitions?.[0]?.competitors?.find(
-          c => c.team?.id === team.teamId
+      if (shouldShowSpringTraining) {
+        // For spring training, reuse the getTeamRecord function logic
+        // This is the same calculation that works in the scores column
+        const springRes = await fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${team.teamId}/schedule?season=${seasonNum}&seasontype=1`
         );
-        if (teamInGame?.winner === true) wins++;
-        else if (teamInGame?.winner === false) losses++;
-      });
-
-      return {
-        id: team.teamId,
-        name: team.name,
-        logo: team.logo,
-        color: team.color,
-        wins,
-        losses,
-        record: `${wins}-${losses}`,
-        winPct: wins / (wins + losses) || 0
-      };
+        const springData = await springRes.json();
+        
+        // Calculate spring training record
+        let wins = 0;
+        let losses = 0;
+        let ties = 0;
+        
+        springData.events?.forEach(event => {
+          const teamInGame = event.competitions?.[0]?.competitors?.find(
+            c => c.team?.id === team.teamId
+          );
+          const otherTeam = event.competitions?.[0]?.competitors?.find(
+            c => c.team?.id !== team.teamId
+          );
+          
+          if (teamInGame && otherTeam) {
+            // Check for tie - both teams have same score and winner: false
+            const isTie = teamInGame.score?.value === otherTeam.score?.value && 
+                         teamInGame.winner === false && 
+                         otherTeam.winner === false;
+            
+            if (isTie) ties++;
+            else if (teamInGame.winner === true) wins++;
+            else if (teamInGame.winner === false) losses++;
+          }
+        });
+        
+        const games = wins + losses + ties;
+        const winPct = games > 0 ? (wins + (ties * 0.5)) / games : 0;
+        
+        return {
+          id: team.teamId,
+          name: team.name,
+          logo: team.logo,
+          color: team.color,
+          wins,
+          losses,
+          ties,
+          record: `${wins}-${losses}${ties > 0 ? `-${ties}` : ''}`,
+          winPct
+        };
+      } else {
+        // For regular season, use the original method
+        const scheduleRes = await fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${team.teamId}/schedule?season=${seasonNum}&seasontype=2`
+        );
+        const scheduleData = await scheduleRes.json();
+        
+        // Calculate record from regular season games
+        let wins = 0;
+        let losses = 0;
+        scheduleData.events?.forEach(event => {
+          const teamInGame = event.competitions?.[0]?.competitors?.find(
+            c => c.team?.id === team.teamId
+          );
+          if (teamInGame?.winner === true) wins++;
+          else if (teamInGame?.winner === false) losses++;
+        });
+        
+        const winPct = wins + losses > 0 ? wins / (wins + losses) : 0;
+        
+        return {
+          id: team.teamId,
+          name: team.name,
+          logo: team.logo,
+          color: team.color,
+          wins,
+          losses,
+          ties: 0,
+          record: `${wins}-${losses}`,
+          winPct
+        };
+      }
     });
 
     const teams = await Promise.all(teamPromises);
