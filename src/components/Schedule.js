@@ -5,19 +5,34 @@ export async function renderSchedule(teamId, season) {
   try {
     const data = await getSchedule(teamId, season);
     
+    // Filter out games that have already happened
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    
+    // Filter to only include upcoming games
+    const upcomingGames = data.events.filter(game => {
+      const gameDate = new Date(game.date);
+      gameDate.setHours(0, 0, 0, 0); // Start of game day
+      return gameDate >= today;
+    });
+    
+    // Count spring training and regular season upcoming games
+    const upcomingSpringTrainingGames = upcomingGames.filter(e => e.isSpringTraining);
+    const upcomingRegularGames = upcomingGames.filter(e => !e.isSpringTraining);
+    
     const scheduleHtml = `
       <div>
         <!-- Controls -->
         <div class="flex items-center justify-between mb-4">
           <div id="schedule-game-count" class="text-sm text-gray-500">
-            ${data.events.filter(e => !e.isSpringTraining).length} Games
+            ${upcomingRegularGames.length} Games
           </div>
           ${renderScheduleControls()}
         </div>
 
         <!-- Games List -->
         <div id="schedule-list" class="divide-y divide-gray-200 dark:divide-gray-800">
-          ${data.events.map(game => {
+          ${upcomingGames.length > 0 ? upcomingGames.map(game => {
             const competition = game.competitions;
             if (!competition?.competitors) return '';
             
@@ -65,7 +80,7 @@ export async function renderSchedule(teamId, season) {
                 </div>
               </div>
             `;
-          }).join('')}
+          }).join('') : '<div class="mt-6 text-gray-600 dark:text-gray-400">No upcoming games scheduled.</div>'}
         </div>
       </div>
     `;
@@ -90,10 +105,16 @@ export async function renderSchedule(teamId, season) {
 
         // Update game count
         const visibleGames = Array.from(document.querySelectorAll('#schedule-list > div')).filter(
-          div => div.style.display !== 'none'
+          div => div.style.display !== 'none' && !div.classList.contains('mt-6')
         );
         document.getElementById('schedule-game-count').textContent = `${visibleGames.length} Games`;
       });
+    }
+
+    // Only show spring training button if there are spring training games
+    const hasSpringTrainingGames = upcomingSpringTrainingGames.length > 0;
+    if (springTrainingToggle && !hasSpringTrainingGames) {
+      springTrainingToggle.style.display = 'none';
     }
 
     // Initial state - show spring training games for 2025, hide for other years
