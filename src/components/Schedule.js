@@ -200,11 +200,11 @@ export async function renderSchedule(teamId, season) {
         const opposingTeamInfo = getTeamById(opposingTeam.team.id);
         
         return `
-          <div data-game-id="${game.id}">
+          <div data-game-id="${game.id}" ${game.isSpringTraining ? 'data-spring-training="true"' : ''} style="${game.isSpringTraining && season !== 2025 ? 'display: none;' : ''}">
             <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
               game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
               isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
-            }" ${game.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
+            }">
               <div class="flex items-center">
                 <div class="w-14 text-sm text-gray-600 dark:text-gray-400">
                   ${formattedDate}
@@ -322,11 +322,9 @@ export async function renderSchedule(teamId, season) {
         updateScheduleSpringTrainingButton(newEnabled);
 
         // Filter games
-        const games = document.querySelectorAll('#schedule-list > div');
+        const games = document.querySelectorAll('#schedule-list > div[data-spring-training="true"]');
         games.forEach(game => {
-          if (game.classList.contains('bg-yellow-50') || game.classList.contains('dark:bg-yellow-900')) {
-            game.style.display = newEnabled ? 'flex' : 'none';
-          }
+          game.style.display = newEnabled ? 'block' : 'none';
         });
 
         // Update game count
@@ -337,14 +335,23 @@ export async function renderSchedule(teamId, season) {
       });
     }
 
-    // Only show spring training button if there are spring training games
-    const hasSpringTrainingGames = upcomingSpringTrainingGames.length > 0;
-    if (springTrainingToggle && !hasSpringTrainingGames) {
-      springTrainingToggle.style.display = 'none';
-    }
-
     // Initial state - show spring training games for 2025, hide for other years
-    updateScheduleSpringTrainingButton(season === 2025);
+    if (springTrainingToggle) {
+      const shouldShowSpringTraining = season === 2025;
+      updateScheduleSpringTrainingButton(shouldShowSpringTraining);
+      
+      // Update initial visibility of spring training games
+      const games = document.querySelectorAll('#schedule-list > div[data-spring-training="true"]');
+      games.forEach(game => {
+        game.style.display = shouldShowSpringTraining ? 'block' : 'none';
+      });
+
+      // Update game count
+      const visibleGames = Array.from(document.querySelectorAll('#schedule-list > div')).filter(
+        div => div.style.display !== 'none' && !div.classList.contains('mt-6')
+      );
+      document.getElementById('schedule-game-count').textContent = `${visibleGames.length} Games`;
+    }
 
   } catch (error) {
     console.error('Error rendering schedule:', error);
