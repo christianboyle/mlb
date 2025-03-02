@@ -1,6 +1,18 @@
 import { getSchedule, getTeamById } from '../espn.js';
 import { renderScheduleControls, updateScheduleSpringTrainingButton } from './ScheduleControls.js';
 
+// Add function to fetch live game details
+async function getLiveGameDetails(gameId) {
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${gameId}`);
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching live game details:', error);
+    return null;
+  }
+}
+
 export async function renderSchedule(teamId, season) {
   try {
     const data = await getSchedule(teamId, season);
@@ -20,6 +32,133 @@ export async function renderSchedule(teamId, season) {
     const upcomingSpringTrainingGames = upcomingGames.filter(e => e.isSpringTraining);
     const upcomingRegularGames = upcomingGames.filter(e => !e.isSpringTraining);
     
+    // Build games list HTML
+    let gamesListHtml = '<div class="mt-6 text-gray-600 dark:text-gray-400">No upcoming games scheduled.</div>';
+    
+    if (upcomingGames.length > 0) {
+      const gamesList = await Promise.all(upcomingGames.map(async game => {
+        const competition = game.competitions;
+        if (!competition?.competitors) return '';
+        
+        const selectedTeam = competition.competitors.find(c => c.team.id === teamId);
+        const opposingTeam = competition.competitors.find(c => c.team.id !== teamId);
+        
+        if (!selectedTeam || !opposingTeam) return '';
+
+        const date = new Date(game.date);
+        const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const isHome = selectedTeam.homeAway === 'home';
+        
+        // Check if game is today using current time
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        
+        // Format game time for all games
+        const gameTime = date.toLocaleTimeString('en-US', { 
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+
+        // Check if game is live using actual current time
+        const gameStartTime = date.getTime();
+        const currentTime = now.getTime();
+        const fourHoursInMs = 4 * 60 * 60 * 1000;
+        const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
+
+        // Get live game details if the game is live
+        let liveGameDetails = null;
+        if (isLive) {
+          liveGameDetails = await getLiveGameDetails(game.id);
+        }
+
+        // Get ESPN gamecast URL
+        const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
+        
+        // Get full team info to access slug
+        const opposingTeamInfo = getTeamById(opposingTeam.team.id);
+        
+        return `
+          <div>
+            <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
+              game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
+              isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
+            }" ${game.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
+              <div class="flex items-center">
+                <div class="w-14 text-sm text-gray-600 dark:text-gray-400">
+                  ${formattedDate}
+                  <div class="text-xs">${gameTime}</div>
+                </div>
+                <img 
+                  alt="${opposingTeam.team.name}"
+                  src="${opposingTeam.team.logo}"
+                  class="h-5 w-5"
+                  width="20"
+                  height="20"
+                />
+                <a class="font-semibold ml-4" href="/${opposingTeamInfo?.slug || ''}">
+                  ${opposingTeam.team.name}
+                </a>
+                ${isToday ? 
+                  isLive ? `
+                    <a href="${gamecastUrl}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="ml-4 px-2 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors inline-flex items-center gap-1">
+                      LIVE
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+                    </a>
+                  ` : `
+                    <span class="ml-4 px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
+                      TODAY
+                    </span>
+                  `
+                : ''}
+              </div>
+              <div class="text-gray-500 dark:text-gray-400">
+                ${isHome ? `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-4 w-4">
+                    <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
+                    <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  </svg>
+                ` : `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin h-4 w-4">
+                    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                `}
+              </div>
+            </div>
+            ${isLive && liveGameDetails ? `
+              <div class="px-0 min-[450px]:px-4 py-2 bg-gray-50 dark:bg-yellow-900 dark:bg-opacity-40 text-sm">
+                <div class="flex items-center justify-between">
+                  <div class="font-medium text-gray-900 dark:text-white">
+                    ${liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
+                  </div>
+                  <div class="flex items-center gap-6">
+                    ${liveGameDetails.boxscore?.teams?.map(team => `
+                      <div class="flex items-center gap-2">
+                        <img 
+                          src="${team.team?.logo}"
+                          alt="${team.team?.displayName || ''}"
+                          class="h-4 w-4"
+                        />
+                        <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                <div class="text-gray-600 dark:text-white mt-1">
+                  ${liveGameDetails.situation?.outs || '0'} outs
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }));
+      
+      gamesListHtml = gamesList.join('');
+    }
+
     const scheduleHtml = `
       <div>
         <!-- Controls -->
@@ -32,93 +171,7 @@ export async function renderSchedule(teamId, season) {
 
         <!-- Games List -->
         <div id="schedule-list" class="divide-y divide-gray-200 dark:divide-gray-800">
-          ${upcomingGames.length > 0 ? upcomingGames.map(game => {
-            const competition = game.competitions;
-            if (!competition?.competitors) return '';
-            
-            const selectedTeam = competition.competitors.find(c => c.team.id === teamId);
-            const opposingTeam = competition.competitors.find(c => c.team.id !== teamId);
-            
-            if (!selectedTeam || !opposingTeam) return '';
-
-            const date = new Date(game.date);
-            const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const isHome = selectedTeam.homeAway === 'home';
-            
-            // Check if game is today using current time
-            const now = new Date();
-            const isToday = date.toDateString() === now.toDateString();
-            
-            // Format game time for all games
-            const gameTime = date.toLocaleTimeString('en-US', { 
-              hour: 'numeric',
-              minute: '2-digit'
-            });
-
-            // Check if game is live using actual current time
-            const gameStartTime = date.getTime();
-            const currentTime = now.getTime();
-            const fourHoursInMs = 4 * 60 * 60 * 1000;
-            const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
-
-            // Get ESPN gamecast URL
-            const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
-            
-            // Get full team info to access slug
-            const opposingTeamInfo = getTeamById(opposingTeam.team.id);
-            
-            return `
-              <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
-                game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
-                isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
-              }" ${game.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
-                <div class="flex items-center">
-                  <div class="w-14 text-sm text-gray-600 dark:text-gray-400">
-                    ${formattedDate}
-                    <div class="text-xs">${gameTime}</div>
-                  </div>
-                  <img 
-                    alt="${opposingTeam.team.name}"
-                    src="${opposingTeam.team.logo}"
-                    class="h-5 w-5"
-                    width="20"
-                    height="20"
-                  />
-                  <a class="font-semibold ml-4" href="/${opposingTeamInfo?.slug || ''}">
-                    ${opposingTeam.team.name}
-                  </a>
-                  ${isToday ? 
-                    isLive ? `
-                      <a href="${gamecastUrl}" 
-                         target="_blank" 
-                         rel="noopener noreferrer" 
-                         class="ml-4 px-2 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors inline-flex items-center gap-1">
-                        LIVE
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
-                      </a>
-                    ` : `
-                      <span class="ml-4 px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
-                        TODAY
-                      </span>
-                    `
-                  : ''}
-                </div>
-                <div class="text-gray-500 dark:text-gray-400">
-                  ${isHome ? `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-4 w-4">
-                      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
-                      <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    </svg>
-                  ` : `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin h-4 w-4">
-                      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                  `}
-                </div>
-              </div>
-            `;
-          }).join('') : '<div class="mt-6 text-gray-600 dark:text-gray-400">No upcoming games scheduled.</div>'}
+          ${gamesListHtml}
         </div>
       </div>
     `;
