@@ -61,17 +61,6 @@ export async function renderSchedule(teamId, season) {
             const fourHoursInMs = 4 * 60 * 60 * 1000;
             const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
 
-            // Debug logging
-            console.log('Game Time Check:', {
-              id: game.id,
-              opponent: opposingTeam.team.name,
-              gameDate: date.toLocaleString(),
-              currentDate: now.toLocaleString(),
-              timeDiff: Math.round((currentTime - gameStartTime) / (60 * 1000)), // minutes
-              isToday,
-              isLive
-            });
-
             // Get ESPN gamecast URL
             const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
             
@@ -79,7 +68,7 @@ export async function renderSchedule(teamId, season) {
             const opposingTeamInfo = getTeamById(opposingTeam.team.id);
             
             return `
-              <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
+              <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
                 game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
                 isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
               }" ${game.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
