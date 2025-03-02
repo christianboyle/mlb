@@ -45,15 +45,36 @@ export async function renderSchedule(teamId, season) {
             const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const isHome = selectedTeam.homeAway === 'home';
             
+            // Check if game is today
+            const isToday = date.toDateString() === today.toDateString();
+            
+            // Format game time for all games
+            const gameTime = date.toLocaleTimeString('en-US', { 
+              hour: 'numeric',
+              minute: '2-digit'
+            });
+
+            // Check if game is live (today's game and current time is after start time but within 4 hours of start)
+            const isLive = isToday && 
+              today >= date && 
+              today <= new Date(date.getTime() + (4 * 60 * 60 * 1000));
+
+            // Get ESPN gamecast URL
+            const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
+            
             // Get full team info to access slug
             const opposingTeamInfo = getTeamById(opposingTeam.team.id);
             
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 border-b border-gray-200 dark:border-gray-800 ${
-                game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : ''
+                game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
+                isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
               }" ${game.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
                 <div class="flex items-center">
-                  <div class="w-14 text-sm text-gray-600 dark:text-gray-400">${formattedDate}</div>
+                  <div class="w-14 text-sm text-gray-600 dark:text-gray-400">
+                    ${formattedDate}
+                    <div class="text-xs">${gameTime}</div>
+                  </div>
                   <img 
                     alt="${opposingTeam.team.name}"
                     src="${opposingTeam.team.logo}"
@@ -64,6 +85,20 @@ export async function renderSchedule(teamId, season) {
                   <a class="font-semibold ml-4" href="/${opposingTeamInfo?.slug || ''}">
                     ${opposingTeam.team.name}
                   </a>
+                  ${isToday ? 
+                    isLive ? `
+                      <a href="${gamecastUrl}" 
+                         target="_blank" 
+                         rel="noopener noreferrer" 
+                         class="ml-4 px-2 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors">
+                        LIVE
+                      </a>
+                    ` : `
+                      <span class="ml-4 px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
+                        TODAY
+                      </span>
+                    `
+                  : ''}
                 </div>
                 <div class="text-gray-500 dark:text-gray-400">
                   ${isHome ? `
