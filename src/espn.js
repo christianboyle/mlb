@@ -575,16 +575,41 @@ export async function getDivisionStandings(season, teamId, showSpringTraining = 
 
     const teams = await Promise.all(teamPromises);
     
+    // Calculate win percentage properly including ties
+    teams.forEach(team => {
+      const games = team.wins + team.losses + team.ties;
+      team.winPct = games > 0 ? (team.wins + (team.ties * 0.5)) / games : 0;
+    });
+
     // Sort by win percentage
-    const sortedTeams = teams.sort((a, b) => b.winPct - a.winPct);
+    const sortedTeams = teams.sort((a, b) => {
+      if (b.winPct !== a.winPct) {
+        return b.winPct - a.winPct;
+      }
+      // If win percentages are equal, sort by wins
+      if (b.wins !== a.wins) {
+        return b.wins - a.wins;
+      }
+      // If wins are equal, sort by fewer losses
+      return a.losses - b.losses;
+    });
     
-    // Add position and standing summary
+    // Add position and standing summary, handling ties
+    let currentPosition = 1;
+    let currentWinPct = -1;
+    let skippedPositions = 0;
+
     return sortedTeams.map((team, index) => {
-      const position = index + 1;
-      const suffix = position === 1 ? 'st' : position === 2 ? 'nd' : position === 3 ? 'rd' : 'th';
+      // If this is the first team or if this team has a different win percentage than the previous team
+      if (index === 0 || team.winPct !== sortedTeams[index - 1].winPct) {
+        currentPosition = index + 1;
+        currentWinPct = team.winPct;
+      }
+
+      const suffix = currentPosition === 1 ? 'st' : currentPosition === 2 ? 'nd' : currentPosition === 3 ? 'rd' : 'th';
       return {
         ...team,
-        standingSummary: `${position}${suffix} in ${divisionName}`
+        standingSummary: `${currentPosition}${suffix} in ${divisionName}`
       };
     });
   } catch (error) {
