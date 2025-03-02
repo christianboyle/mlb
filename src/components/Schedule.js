@@ -236,9 +236,8 @@ export async function renderSchedule(teamId, season) {
                     <a href="${gamecastUrl}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
-                       class="ml-4 px-2 py-0.5 ${isComplete ? 'bg-gray-600' : 'bg-red-600'} text-white text-xs font-medium rounded-md hover:${isComplete ? 'bg-gray-700' : 'bg-red-700'} transition-colors inline-flex items-center gap-1">
+                       class="ml-4 px-2 py-0.5 ${isComplete ? 'bg-gray-600' : 'bg-red-600'} text-white text-xs font-medium rounded-md hover:${isComplete ? 'bg-gray-700' : 'bg-red-700'} transition-colors">
                       ${isComplete ? 'ENDED' : 'LIVE'}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                     </a>
                   ` : `
                     <span class="ml-4 px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
