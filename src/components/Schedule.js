@@ -1,6 +1,9 @@
 import { getSchedule, getTeamById } from '../espn.js';
 import { renderScheduleControls, updateScheduleSpringTrainingButton } from './ScheduleControls.js';
 
+// Store intervals by game ID to clean them up later
+const liveGameIntervals = new Map();
+
 // Add function to fetch live game details
 async function getLiveGameDetails(gameId) {
   try {
@@ -13,7 +16,112 @@ async function getLiveGameDetails(gameId) {
   }
 }
 
+// Function to update live game details in the DOM
+async function updateLiveGameDetails(gameId) {
+  const liveGameDetails = await getLiveGameDetails(gameId);
+  if (!liveGameDetails) return;
+
+  const liveGameElement = document.querySelector(`[data-game-id="${gameId}"] .live-game-details`);
+  if (!liveGameElement) return;
+
+  // Get current values before update
+  const previousInning = liveGameElement.querySelector('.font-medium.text-gray-900')?.textContent;
+  const previousScores = Array.from(liveGameElement.querySelectorAll('.flex.items-center.gap-2 span')).map(span => span.textContent);
+  const previousOuts = liveGameElement.querySelector('.text-gray-600.dark\\:text-white')?.textContent;
+
+  // Get new values
+  const newInning = liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress';
+  const newScores = liveGameDetails.boxscore?.teams?.map(team => 
+    team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'
+  ) || [];
+  const newOuts = `${liveGameDetails.situation?.outs === 1 ? '1 out' : 
+    liveGameDetails.situation?.outs === 2 ? '2 outs' : 
+    liveGameDetails.situation?.outs === 3 ? 'End' : 
+    '0 outs'}${liveGameDetails.situation?.onFirst || liveGameDetails.situation?.onSecond || liveGameDetails.situation?.onThird ? ' • ' : ''}${liveGameDetails.situation?.onFirst ? '🏃1B' : ''}${liveGameDetails.situation?.onSecond ? '🏃2B' : ''}${liveGameDetails.situation?.onThird ? '🏃3B' : ''}`;
+
+  // Determine what changed
+  const inningChanged = previousInning !== newInning;
+  const scoresChanged = previousScores.some((score, i) => score !== newScores[i]);
+  const outsChanged = previousOuts !== newOuts;
+
+  liveGameElement.innerHTML = `
+    <div class="flex flex-col gap-1">
+      <div class="flex items-center justify-between">
+        <div class="font-medium text-gray-900 dark:text-white ${inningChanged ? 'font-bold' : ''}">
+          ${newInning}
+        </div>
+        <div class="flex items-center gap-6">
+          ${liveGameDetails.boxscore?.teams?.map((team, index) => `
+            <div class="flex items-center gap-2">
+              <img 
+                src="${team.team?.logo}"
+                alt="${team.team?.displayName || ''}"
+                class="h-4 w-4"
+              />
+              <span class="font-medium text-gray-900 dark:text-white ${previousScores[index] !== newScores[index] ? 'font-bold' : ''}">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="text-gray-600 dark:text-white ${outsChanged ? 'font-bold' : ''}">
+        ${newOuts}
+      </div>
+    </div>
+  `;
+
+  // If anything changed, add flash effect
+  if (inningChanged || scoresChanged || outsChanged) {
+    liveGameElement.style.transition = 'background-color 0.5s ease';
+    liveGameElement.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; // Light green
+    
+    // Reset background color and bold after animation
+    setTimeout(() => {
+      liveGameElement.style.backgroundColor = '';
+      // Remove bold from all elements
+      const boldElements = liveGameElement.querySelectorAll('.font-bold');
+      boldElements.forEach(el => el.classList.remove('font-bold'));
+      // Remove transition after reset to prevent affecting future updates
+      setTimeout(() => {
+        liveGameElement.style.transition = '';
+      }, 500);
+    }, 500);
+  }
+}
+
+// Function to start polling for a live game
+function startLiveGamePolling(gameId) {
+  // Clear any existing interval for this game
+  if (liveGameIntervals.has(gameId)) {
+    clearInterval(liveGameIntervals.get(gameId));
+  }
+
+  // Set up new polling interval
+  const interval = setInterval(() => {
+    updateLiveGameDetails(gameId);
+  }, 30000); // Update every 30 seconds
+
+  // Store the interval ID
+  liveGameIntervals.set(gameId, interval);
+}
+
+// Function to stop polling for a game
+function stopLiveGamePolling(gameId) {
+  if (liveGameIntervals.has(gameId)) {
+    clearInterval(liveGameIntervals.get(gameId));
+    liveGameIntervals.delete(gameId);
+  }
+}
+
+// Clean up all intervals
+function cleanupAllPolling() {
+  liveGameIntervals.forEach((interval) => clearInterval(interval));
+  liveGameIntervals.clear();
+}
+
 export async function renderSchedule(teamId, season) {
+  // Clean up any existing polling intervals when re-rendering
+  cleanupAllPolling();
+
   try {
     const data = await getSchedule(teamId, season);
     
@@ -78,7 +186,7 @@ export async function renderSchedule(teamId, season) {
         const opposingTeamInfo = getTeamById(opposingTeam.team.id);
         
         return `
-          <div>
+          <div data-game-id="${game.id}">
             <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
               game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
               isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
@@ -129,7 +237,7 @@ export async function renderSchedule(teamId, season) {
               </div>
             </div>
             ${isLive && liveGameDetails ? `
-              <div class="px-0 min-[450px]:px-4 py-2 bg-gray-50 dark:bg-yellow-900 dark:bg-opacity-40 text-sm">
+              <div class="px-0 min-[450px]:px-4 py-2 bg-gray-50 dark:bg-yellow-900 dark:bg-opacity-40 text-sm live-game-details">
                 <div class="flex items-center justify-between">
                   <div class="font-medium text-gray-900 dark:text-white">
                     ${liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
@@ -157,6 +265,19 @@ export async function renderSchedule(teamId, season) {
       }));
       
       gamesListHtml = gamesList.join('');
+
+      // After rendering, start polling for any live games
+      upcomingGames.forEach(game => {
+        const now = new Date();
+        const gameStartTime = new Date(game.date).getTime();
+        const currentTime = now.getTime();
+        const fourHoursInMs = 4 * 60 * 60 * 1000;
+        const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
+
+        if (isLive) {
+          startLiveGamePolling(game.id);
+        }
+      });
     }
 
     const scheduleHtml = `
@@ -215,4 +336,7 @@ export async function renderSchedule(teamId, season) {
     console.error('Error rendering schedule:', error);
     document.getElementById('schedule').innerHTML = '<div class="text-red-500">Error loading schedule</div>';
   }
-} 
+}
+
+// Add cleanup on page unload
+window.addEventListener('unload', cleanupAllPolling); 
