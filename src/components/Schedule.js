@@ -27,13 +27,15 @@ async function updateLiveGameDetails(gameId) {
   // Get current values before update
   const previousInning = liveGameElement.querySelector('.font-medium.text-gray-900')?.textContent;
   const previousScores = Array.from(liveGameElement.querySelectorAll('.flex.items-center.gap-2 span')).map(span => span.textContent);
-  const previousOuts = liveGameElement.querySelector('.text-gray-600.dark\\:text-white')?.textContent;
 
   // Get new values
   const newInning = liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress';
   const newScores = liveGameDetails.boxscore?.teams?.map(team => 
     team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'
   ) || [];
+
+  // Check if game is complete
+  const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
 
   // Format outs text with correct pluralization
   const outsCount = liveGameDetails.situation?.outs || 0;
@@ -49,13 +51,12 @@ async function updateLiveGameDetails(gameId) {
   // Determine what changed
   const inningChanged = previousInning !== newInning;
   const scoresChanged = previousScores.some((score, i) => score !== newScores[i]);
-  const outsChanged = previousOuts !== outsText;
 
   liveGameElement.innerHTML = `
     <div class="flex flex-col gap-1">
       <div class="flex items-center justify-between">
         <div class="font-medium text-gray-900 dark:text-white ${inningChanged ? 'font-bold' : ''}">
-          ${newInning}
+          ${isComplete ? 'FINAL' : newInning}
         </div>
         <div class="flex items-center gap-6">
           ${liveGameDetails.boxscore?.teams?.map((team, index) => `
@@ -70,21 +71,23 @@ async function updateLiveGameDetails(gameId) {
           `).join('')}
         </div>
       </div>
-      <div class="flex items-center justify-between">
-        <div class="text-gray-600 dark:text-white ${outsChanged ? 'font-bold' : ''}">
-          ${outsText}
-        </div>
-        ${runnersText ? `
-          <div class="text-gray-600 dark:text-white text-right">
-            ${runnersText}
+      ${!isComplete ? `
+        <div class="flex items-center justify-between">
+          <div class="text-gray-600 dark:text-white">
+            ${outsText}
           </div>
-        ` : ''}
-      </div>
+          ${runnersText ? `
+            <div class="text-gray-600 dark:text-white text-right">
+              ${runnersText}
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
     </div>
   `;
 
   // If anything changed, add flash effect
-  if (inningChanged || scoresChanged || outsChanged) {
+  if (inningChanged || scoresChanged) {
     liveGameElement.style.transition = 'background-color 0.5s ease';
     liveGameElement.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; // Light green
     
@@ -99,6 +102,11 @@ async function updateLiveGameDetails(gameId) {
         liveGameElement.style.transition = '';
       }, 500);
     }, 500);
+  }
+
+  // If game is complete, stop polling
+  if (isComplete) {
+    stopLiveGamePolling(gameId);
   }
 }
 
@@ -187,11 +195,14 @@ export async function renderSchedule(teamId, season) {
         const fourHoursInMs = 4 * 60 * 60 * 1000;
         const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
 
-        // Get live game details if the game is live
+        // Get live game details if the game is today (either live or completed)
         let liveGameDetails = null;
-        if (isLive) {
+        if (isToday && currentTime >= gameStartTime) {
           liveGameDetails = await getLiveGameDetails(game.id);
         }
+
+        // Check if game is complete
+        const isComplete = liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed || false;
 
         // Get ESPN gamecast URL
         const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
@@ -221,17 +232,17 @@ export async function renderSchedule(teamId, season) {
                   ${opposingTeam.team.name}
                 </a>
                 ${isToday ? 
-                  isLive ? `
+                  currentTime >= gameStartTime ? `
                     <a href="${gamecastUrl}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
-                       class="ml-4 px-2 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors inline-flex items-center gap-1">
-                      LIVE
+                       class="ml-4 px-2 py-0.5 ${isComplete ? 'bg-gray-600' : 'bg-red-600'} text-white text-xs font-medium rounded-md hover:${isComplete ? 'bg-gray-700' : 'bg-red-700'} transition-colors inline-flex items-center gap-1">
+                      ${isComplete ? 'ENDED' : 'LIVE'}
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                     </a>
                   ` : `
                     <span class="ml-4 px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
-                      TODAY
+                      UPCOMING
                     </span>
                   `
                 : ''}
@@ -250,27 +261,46 @@ export async function renderSchedule(teamId, season) {
                 `}
               </div>
             </div>
-            ${isLive && liveGameDetails ? `
+            ${(isLive || (isToday && liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed)) && liveGameDetails ? `
               <div class="px-0 min-[450px]:px-4 py-2 bg-gray-50 dark:bg-yellow-900 dark:bg-opacity-40 text-sm live-game-details">
-                <div class="flex items-center justify-between">
-                  <div class="font-medium text-gray-900 dark:text-white">
-                    ${liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center justify-between">
+                    <div class="font-medium text-gray-900 dark:text-white">
+                      ${isComplete ? 'FINAL' : liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
+                    </div>
+                    <div class="flex items-center gap-6">
+                      ${liveGameDetails.boxscore?.teams?.map(team => `
+                        <div class="flex items-center gap-2">
+                          <img 
+                            src="${team.team?.logo}"
+                            alt="${team.team?.displayName || ''}"
+                            class="h-4 w-4"
+                          />
+                          <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                        </div>
+                      `).join('')}
+                    </div>
                   </div>
-                  <div class="flex items-center gap-6">
-                    ${liveGameDetails.boxscore?.teams?.map(team => `
-                      <div class="flex items-center gap-2">
-                        <img 
-                          src="${team.team?.logo}"
-                          alt="${team.team?.displayName || ''}"
-                          class="h-4 w-4"
-                        />
-                        <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                  ${!isComplete ? `
+                    <div class="flex items-center justify-between">
+                      <div class="text-gray-600 dark:text-white">
+                        ${liveGameDetails.situation?.outs === 1 ? '1 out' : `${liveGameDetails.situation?.outs || '0'} outs`}
                       </div>
-                    `).join('')}
-                  </div>
-                </div>
-                <div class="text-gray-600 dark:text-white mt-1">
-                  ${liveGameDetails.situation?.outs || '0'} outs
+                      ${[
+                        liveGameDetails.situation?.onFirst ? '🏃1B' : '',
+                        liveGameDetails.situation?.onSecond ? '🏃2B' : '',
+                        liveGameDetails.situation?.onThird ? '🏃3B' : ''
+                      ].filter(Boolean).length > 0 ? `
+                        <div class="text-gray-600 dark:text-white text-right">
+                          ${[
+                            liveGameDetails.situation?.onFirst ? '🏃1B' : '',
+                            liveGameDetails.situation?.onSecond ? '🏃2B' : '',
+                            liveGameDetails.situation?.onThird ? '🏃3B' : ''
+                          ].filter(Boolean).join(' ')}
+                        </div>
+                      ` : ''}
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             ` : ''}
@@ -281,7 +311,7 @@ export async function renderSchedule(teamId, season) {
       gamesListHtml = gamesList.join('');
 
       // After rendering, start polling for any live games
-      upcomingGames.forEach(game => {
+      upcomingGames.forEach(async game => {
         const now = new Date();
         const gameStartTime = new Date(game.date).getTime();
         const currentTime = now.getTime();
@@ -289,7 +319,13 @@ export async function renderSchedule(teamId, season) {
         const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
 
         if (isLive) {
-          startLiveGamePolling(game.id);
+          // Check if game is already complete before starting polling
+          const liveGameDetails = await getLiveGameDetails(game.id);
+          const isComplete = liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed || false;
+          
+          if (!isComplete) {
+            startLiveGamePolling(game.id);
+          }
         }
       });
     }
