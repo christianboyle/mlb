@@ -34,15 +34,22 @@ async function updateLiveGameDetails(gameId) {
   const newScores = liveGameDetails.boxscore?.teams?.map(team => 
     team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'
   ) || [];
-  const newOuts = `${liveGameDetails.situation?.outs === 1 ? '1 out' : 
-    liveGameDetails.situation?.outs === 2 ? '2 outs' : 
-    liveGameDetails.situation?.outs === 3 ? 'End' : 
-    '0 outs'}${liveGameDetails.situation?.onFirst || liveGameDetails.situation?.onSecond || liveGameDetails.situation?.onThird ? ' • ' : ''}${liveGameDetails.situation?.onFirst ? '🏃1B' : ''}${liveGameDetails.situation?.onSecond ? '🏃2B' : ''}${liveGameDetails.situation?.onThird ? '🏃3B' : ''}`;
+
+  // Format outs text with correct pluralization
+  const outsCount = liveGameDetails.situation?.outs || 0;
+  const outsText = outsCount === 1 ? '1 out' : `${outsCount} outs`;
+
+  // Format runners text
+  const runnersText = [
+    liveGameDetails.situation?.onFirst ? '🏃1B' : '',
+    liveGameDetails.situation?.onSecond ? '🏃2B' : '',
+    liveGameDetails.situation?.onThird ? '🏃3B' : ''
+  ].filter(Boolean).join(' ');
 
   // Determine what changed
   const inningChanged = previousInning !== newInning;
   const scoresChanged = previousScores.some((score, i) => score !== newScores[i]);
-  const outsChanged = previousOuts !== newOuts;
+  const outsChanged = previousOuts !== outsText;
 
   liveGameElement.innerHTML = `
     <div class="flex flex-col gap-1">
@@ -63,8 +70,15 @@ async function updateLiveGameDetails(gameId) {
           `).join('')}
         </div>
       </div>
-      <div class="text-gray-600 dark:text-white ${outsChanged ? 'font-bold' : ''}">
-        ${newOuts}
+      <div class="flex items-center justify-between">
+        <div class="text-gray-600 dark:text-white ${outsChanged ? 'font-bold' : ''}">
+          ${outsText}
+        </div>
+        ${runnersText ? `
+          <div class="text-gray-600 dark:text-white text-right">
+            ${runnersText}
+          </div>
+        ` : ''}
       </div>
     </div>
   `;
