@@ -45,8 +45,9 @@ export async function renderSchedule(teamId, season) {
             const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const isHome = selectedTeam.homeAway === 'home';
             
-            // Check if game is today
-            const isToday = date.toDateString() === today.toDateString();
+            // Check if game is today using current time
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
             
             // Format game time for all games
             const gameTime = date.toLocaleTimeString('en-US', { 
@@ -54,10 +55,22 @@ export async function renderSchedule(teamId, season) {
               minute: '2-digit'
             });
 
-            // Check if game is live (today's game and current time is after start time but within 4 hours of start)
-            const isLive = isToday && 
-              today >= date && 
-              today <= new Date(date.getTime() + (4 * 60 * 60 * 1000));
+            // Check if game is live using actual current time
+            const gameStartTime = date.getTime();
+            const currentTime = now.getTime();
+            const fourHoursInMs = 4 * 60 * 60 * 1000;
+            const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
+
+            // Debug logging
+            console.log('Game Time Check:', {
+              id: game.id,
+              opponent: opposingTeam.team.name,
+              gameDate: date.toLocaleString(),
+              currentDate: now.toLocaleString(),
+              timeDiff: Math.round((currentTime - gameStartTime) / (60 * 1000)), // minutes
+              isToday,
+              isLive
+            });
 
             // Get ESPN gamecast URL
             const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
@@ -90,8 +103,9 @@ export async function renderSchedule(teamId, season) {
                       <a href="${gamecastUrl}" 
                          target="_blank" 
                          rel="noopener noreferrer" 
-                         class="ml-4 px-2 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors">
+                         class="ml-4 px-2 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors inline-flex items-center gap-1">
                         LIVE
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
                       </a>
                     ` : `
                       <span class="ml-4 px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
