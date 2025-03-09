@@ -97,7 +97,7 @@ async function renderHome({ teamId, params }) {
         </svg>
       </button>
       <main class="flex-1 grid md:grid-cols-2 lg:grid-cols-3 pb-16 sm:pb-0">
-        <section class="w-full mx-auto p-6 border-r border-gray-200 dark:border-gray-800 ${tab !== 'scores' ? 'sm:block hidden' : ''}">
+        <section class="w-full mx-auto p-6 mb-[200px] sm:mb-0 border-r border-gray-200 dark:border-gray-800 ${tab !== 'scores' ? 'sm:block hidden' : ''}">
           <div>
             ${teamId ? 
               `<div class="mb-6">
@@ -128,17 +128,20 @@ async function renderHome({ teamId, params }) {
             }
           </div>
         </section>
-        <section class="w-full mx-auto p-6 border-r border-gray-200 dark:border-gray-800 ${tab !== 'schedule' ? 'sm:block hidden' : ''}">
+        <section class="w-full mx-auto p-6 mb-[200px] sm:mb-0 border-r border-gray-200 dark:border-gray-800 ${tab !== 'schedule' ? 'sm:block hidden' : ''}">
           <h2 class="font-semibold text-2xl mb-4">Schedule • ${DISPLAY_YEAR}</h2>
           ${teamId ? '<div id="schedule"></div>' : 
             '<p class="text-gray-600 dark:text-gray-400">Select a team to view schedule</p>'}
         </section>
-        <section class="w-full mx-auto p-6 ${tab !== 'division' ? 'sm:block hidden' : ''}">
+        <section class="w-full mx-auto p-6 mb-[200px] sm:mb-0 ${tab !== 'division' ? 'sm:block hidden' : ''}">
           <h2 class="font-semibold text-2xl mb-4">Division Standings <span id="division-name-header" class="text-gray-500 dark:text-gray-400 text-lg"></span></h2>
           ${teamId ? '<div id="standings"></div>' : 
             '<p class="text-gray-600 dark:text-gray-400">Select a team to view standings</p>'}
         </section>
       </main>
+      <div class="text-center text-xs text-gray-500 dark:text-gray-400 py-4 hidden sm:block">
+        Built using the ESPN API
+      </div>
     </div>
     ${renderMobileNav(window.location.pathname)}
   `;
