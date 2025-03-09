@@ -97,8 +97,8 @@ async function renderHome({ teamId, params }) {
         </svg>
       </button>
       <main class="flex-1 grid md:grid-cols-2 lg:grid-cols-3 pb-16 sm:pb-0">
-        <div class="border-r border-gray-200 dark:border-gray-800">
-          <section class="w-full mx-auto p-6 mb-[200px] ${tab !== 'scores' ? 'sm:block hidden' : ''}">
+        <div class="border-r border-gray-200 dark:border-gray-800 ${tab !== 'scores' ? 'sm:block hidden' : ''}">
+          <section class="w-full mx-auto p-6 mb-[200px]">
             <div>
               ${teamId ? 
                 `<div class="mb-6">
@@ -130,16 +130,18 @@ async function renderHome({ teamId, params }) {
             </div>
           </section>
         </div>
-        <div class="border-r border-gray-200 dark:border-gray-800">
-          <section class="w-full mx-auto p-6 mb-[200px] ${tab !== 'schedule' ? 'sm:block hidden' : ''}">
+        <div class="border-r border-gray-200 dark:border-gray-800 ${tab !== 'schedule' ? 'sm:block hidden' : ''}">
+          <section class="w-full mx-auto p-6 mb-[200px]">
             <h2 class="font-semibold text-2xl mb-4">Schedule • ${DISPLAY_YEAR}</h2>
             ${teamId ? '<div id="schedule"></div>' : 
               '<p class="text-gray-600 dark:text-gray-400">Select a team to view schedule</p>'}
           </section>
         </div>
-        <div>
-          <section class="w-full mx-auto p-6 mb-[200px] ${tab !== 'division' ? 'sm:block hidden' : ''}">
-            <h2 class="font-semibold text-2xl mb-4">Division Standings <span id="division-name-header" class="text-gray-500 dark:text-gray-400 text-lg"></span></h2>
+        <div class="${tab !== 'division' ? 'sm:block hidden' : ''}">
+          <section class="w-full mx-auto p-6 mb-[200px]">
+            <div class="mb-6">
+              <h2 class="font-semibold text-2xl">Division Standings <span id="division-name-header" class="text-gray-500 dark:text-gray-400 text-lg"></span></h2>
+            </div>
             ${teamId ? '<div id="standings"></div>' : 
               '<p class="text-gray-600 dark:text-gray-400">Select a team to view standings</p>'}
           </section>
