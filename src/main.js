@@ -97,56 +97,82 @@ async function renderHome({ teamId, params }) {
         </svg>
       </button>
       <main class="flex-1 grid md:grid-cols-2 lg:grid-cols-3 pb-16 sm:pb-0">
-        <section class="w-full mx-auto p-6 mb-[200px] sm:mb-0 border-r border-gray-200 dark:border-gray-800 ${tab !== 'scores' ? 'sm:block hidden' : ''}">
-          <div>
-            ${teamId ? 
-              `<div class="mb-6">
-                <h2 class="font-semibold text-2xl">Scores</h2>
-              </div>
-              <div id="scores-container">
-                <div class="flex items-center gap-4 mb-6">
-                  ${teamSelect}
-                  <select 
-                    id="year-select"
-                    class="appearance-none bg-[#ccc] dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                    value="${season}"
-                  >
-                    ${[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000].map(year => `
-                      <option value="${year}" ${year === parseInt(season) ? 'selected' : ''}>
-                        ${year}
-                      </option>
-                    `).join('')}
-                  </select>
+        <div class="border-r border-gray-200 dark:border-gray-800">
+          <section class="w-full mx-auto p-6 mb-[200px] ${tab !== 'scores' ? 'sm:block hidden' : ''}">
+            <div>
+              ${teamId ? 
+                `<div class="mb-6">
+                  <h2 class="font-semibold text-2xl">Scores</h2>
                 </div>
-                <div id="scores"></div>
-              </div>` : 
-              `<h2 class="font-semibold text-2xl mb-4">Scores</h2>
-              <p class="text-gray-600 dark:text-gray-400 mb-6">Select a team to view scores</p>
-              <div class="max-w-xs">
-                ${teamSelect}
-              </div>`
-            }
-          </div>
-        </section>
-        <section class="w-full mx-auto p-6 mb-[200px] sm:mb-0 border-r border-gray-200 dark:border-gray-800 ${tab !== 'schedule' ? 'sm:block hidden' : ''}">
-          <h2 class="font-semibold text-2xl mb-4">Schedule • ${DISPLAY_YEAR}</h2>
-          ${teamId ? '<div id="schedule"></div>' : 
-            '<p class="text-gray-600 dark:text-gray-400">Select a team to view schedule</p>'}
-        </section>
-        <section class="w-full mx-auto p-6 mb-[200px] sm:mb-0 ${tab !== 'division' ? 'sm:block hidden' : ''}">
-          <h2 class="font-semibold text-2xl mb-4">Division Standings <span id="division-name-header" class="text-gray-500 dark:text-gray-400 text-lg"></span></h2>
-          ${teamId ? '<div id="standings"></div>' : 
-            '<p class="text-gray-600 dark:text-gray-400">Select a team to view standings</p>'}
-        </section>
+                <div id="scores-container">
+                  <div class="flex items-center gap-4 mb-6">
+                    ${teamSelect}
+                    <select 
+                      id="year-select"
+                      class="appearance-none bg-[#ccc] dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      value="${season}"
+                    >
+                      ${[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000].map(year => `
+                        <option value="${year}" ${year === parseInt(season) ? 'selected' : ''}>
+                          ${year}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                  <div id="scores"></div>
+                </div>` : 
+                `<h2 class="font-semibold text-2xl mb-4">Scores</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Select a team to view scores</p>
+                <div class="max-w-xs">
+                  ${teamSelect}
+                </div>`
+              }
+            </div>
+          </section>
+        </div>
+        <div class="border-r border-gray-200 dark:border-gray-800">
+          <section class="w-full mx-auto p-6 mb-[200px] ${tab !== 'schedule' ? 'sm:block hidden' : ''}">
+            <h2 class="font-semibold text-2xl mb-4">Schedule • ${DISPLAY_YEAR}</h2>
+            ${teamId ? '<div id="schedule"></div>' : 
+              '<p class="text-gray-600 dark:text-gray-400">Select a team to view schedule</p>'}
+          </section>
+        </div>
+        <div>
+          <section class="w-full mx-auto p-6 mb-[200px] ${tab !== 'division' ? 'sm:block hidden' : ''}">
+            <h2 class="font-semibold text-2xl mb-4">Division Standings <span id="division-name-header" class="text-gray-500 dark:text-gray-400 text-lg"></span></h2>
+            ${teamId ? '<div id="standings"></div>' : 
+              '<p class="text-gray-600 dark:text-gray-400">Select a team to view standings</p>'}
+          </section>
+        </div>
       </main>
-      <div class="text-center text-xs text-gray-500 dark:text-gray-400 py-4 hidden sm:block">
-        Built using the ESPN API
-      </div>
     </div>
-    ${renderMobileNav(window.location.pathname)}
   `;
 
-  app.innerHTML = mainContent;
+  // First time setup
+  if (!document.getElementById('app-content')) {
+    app.innerHTML = `
+      <div id="app-content"></div>
+      <div id="mobile-nav" class="sm:hidden"></div>
+    `;
+    
+    // Initial mobile nav render
+    const mobileNav = document.getElementById('mobile-nav');
+    mobileNav.innerHTML = renderMobileNav(window.location.pathname);
+  }
+  
+  // Always update main content
+  document.getElementById('app-content').innerHTML = mainContent;
+  
+  // Update mobile nav classes without full re-render
+  const mobileNav = document.getElementById('mobile-nav');
+  const currentTab = params.get('tab') || 'scores';
+  const links = mobileNav.querySelectorAll('a');
+  links.forEach(link => {
+    const tab = new URL(link.href).searchParams.get('tab');
+    const baseClasses = 'flex flex-col items-center justify-center w-full h-full';
+    const isActive = tab === currentTab;
+    link.className = `${baseClasses} ${isActive ? '!text-gray-900 dark:!text-gray-100' : '!text-gray-500 dark:!text-gray-400'}`;
+  });
 
   // Wait for next tick to ensure DOM is updated
   setTimeout(async () => {
