@@ -212,10 +212,7 @@ export async function renderSchedule(teamId, season) {
         
         return `
           <div data-game-id="${game.id}" ${game.isSpringTraining ? 'data-spring-training="true"' : ''} style="${game.isSpringTraining && season !== 2025 ? 'display: none;' : ''}">
-            <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
-              game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
-              isToday ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
-            }">
+            <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2">
               <div class="flex items-center">
                 <div class="w-14 text-sm text-gray-600 dark:text-gray-400">
                   ${formattedDate}
@@ -247,7 +244,7 @@ export async function renderSchedule(teamId, season) {
                     </span>
                   `
                 : ''}
-                <div class="text-gray-500 dark:text-gray-400">
+                <div class="text-gray-500 dark:text-gray-400 w-7 flex items-center gap-1">
                   ${isHome ? `
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-4 w-4">
                       <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
@@ -259,6 +256,9 @@ export async function renderSchedule(teamId, season) {
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
                   `}
+                  ${game.isSpringTraining ? `
+                    <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                  ` : ''}
                 </div>
               </div>
             </div>

@@ -82,7 +82,6 @@ export async function renderScores(teamId, season) {
 
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
-                game.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : 
                 game.isPostseason ? 'bg-green-50 bg-opacity-50 dark:bg-green-900 dark:bg-opacity-40' :
                 game.isDoubleHeader ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
               }">

@@ -285,9 +285,7 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
     const standingsHtml = standings.map((team) => {
       const teamInfo = getTeamById(team.id);
       return `
-        <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
-          team.isSpringTraining ? 'bg-yellow-50 bg-opacity-50 dark:bg-yellow-900 dark:bg-opacity-40' : ''
-        }" ${team.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
+        <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2" ${team.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
           <div class="flex items-center">
             <img 
               src="${team.logo}"
