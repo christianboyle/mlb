@@ -358,11 +358,18 @@ export async function renderSchedule(teamId, season) {
         const newEnabled = button.dataset.enabled !== 'true';
         updateScheduleSpringTrainingButton(newEnabled);
 
-        // Filter games
+        // Filter games and update borders
         const games = document.querySelectorAll('#schedule-list > div[data-spring-training="true"]');
         games.forEach(game => {
           game.style.display = newEnabled ? 'block' : 'none';
         });
+
+        // Update first visible item's border
+        const firstVisibleItem = document.querySelector('#schedule-list > div:not([style*="display: none"])');
+        if (firstVisibleItem) {
+          // Remove top border from first visible item
+          firstVisibleItem.style.borderTopWidth = '0';
+        }
 
         // Update game count
         const visibleGames = Array.from(document.querySelectorAll('#schedule-list > div')).filter(
@@ -382,6 +389,13 @@ export async function renderSchedule(teamId, season) {
       games.forEach(game => {
         game.style.display = shouldShowSpringTraining ? 'block' : 'none';
       });
+
+      // Update first visible item's border
+      const firstVisibleItem = document.querySelector('#schedule-list > div:not([style*="display: none"])');
+      if (firstVisibleItem) {
+        // Remove top border from first visible item
+        firstVisibleItem.style.borderTopWidth = '0';
+      }
 
       // Update game count
       const visibleGames = Array.from(document.querySelectorAll('#schedule-list > div')).filter(
