@@ -27,19 +27,20 @@ async function updateLiveGameDetails(gameId) {
   // Get current values before update
   const previousInning = liveGameElement.querySelector('.font-medium.text-gray-900')?.textContent;
   const previousScores = Array.from(liveGameElement.querySelectorAll('.flex.items-center.gap-2 span')).map(span => span.textContent);
+  const previousOuts = liveGameElement.querySelector('.text-gray-600')?.textContent.split(' ')[0] || '0';
 
   // Get new values
   const newInning = liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress';
   const newScores = liveGameDetails.boxscore?.teams?.map(team => 
     team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'
   ) || [];
+  const newOuts = liveGameDetails.situation?.outs || 0;
 
   // Check if game is complete
   const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
 
   // Format outs text with correct pluralization
-  const outsCount = liveGameDetails.situation?.outs || 0;
-  const outsText = outsCount === 1 ? '1 out' : `${outsCount} outs`;
+  const outsText = newOuts === 1 ? '1 out' : `${newOuts} outs`;
 
   // Format runners text
   const runnersText = [
@@ -50,7 +51,21 @@ async function updateLiveGameDetails(gameId) {
 
   // Determine what changed
   const inningChanged = previousInning !== newInning;
-  const scoresChanged = previousScores.some((score, i) => score !== newScores[i]);
+  const scoresChanged = previousScores.some((score, i) => {
+    const prevScore = parseInt(score) || 0;
+    const newScore = parseInt(newScores[i]) || 0;
+    return prevScore !== newScore;
+  });
+  const outsIncreased = parseInt(newOuts) > parseInt(previousOuts);
+
+  // Determine flash color based on type of change
+  let flashColor = 'rgba(34, 197, 94, 0.2)'; // Default green for positive changes
+  if (outsIncreased) {
+    flashColor = 'rgba(239, 68, 68, 0.2)'; // Red for increased outs
+  } else if (scoresChanged) {
+    // Keep green for scoring changes as it's a positive event
+    flashColor = 'rgba(34, 197, 94, 0.2)';
+  }
 
   liveGameElement.innerHTML = `
     <div class="flex flex-col gap-1">
@@ -87,9 +102,9 @@ async function updateLiveGameDetails(gameId) {
   `;
 
   // If anything changed, add flash effect
-  if (inningChanged || scoresChanged) {
+  if (inningChanged || scoresChanged || outsIncreased) {
     liveGameElement.style.transition = 'background-color 0.5s ease';
-    liveGameElement.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; // Light green
+    liveGameElement.style.backgroundColor = flashColor;
     
     // Reset background color and bold after animation
     setTimeout(() => {
@@ -107,6 +122,13 @@ async function updateLiveGameDetails(gameId) {
   // If game is complete, stop polling
   if (isComplete) {
     stopLiveGamePolling(gameId);
+    
+    // Update the LIVE/ENDED badge
+    const badgeElement = document.querySelector(`[data-game-id="${gameId}"] a[href*="gameId"]`);
+    if (badgeElement) {
+      badgeElement.className = 'px-3 py-0.5 bg-gray-600 text-white text-xs font-medium rounded-md hover:bg-gray-700 transition-colors';
+      badgeElement.textContent = 'ENDED';
+    }
   }
 }
 
@@ -263,7 +285,7 @@ export async function renderSchedule(teamId, season) {
               </div>
             </div>
             ${(isLive || (isToday && liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed)) && liveGameDetails ? `
-              <div class="px-0 min-[450px]:px-4 py-2 bg-gray-50 dark:bg-yellow-900 dark:bg-opacity-40 text-sm live-game-details">
+              <div class="px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center justify-between">
                     <div class="font-medium text-gray-900 dark:text-white">
