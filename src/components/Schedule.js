@@ -21,8 +21,25 @@ async function updateLiveGameDetails(gameId) {
   const liveGameDetails = await getLiveGameDetails(gameId);
   if (!liveGameDetails) return;
 
-  const liveGameElement = document.querySelector(`[data-game-id="${gameId}"] .live-game-details`);
-  if (!liveGameElement) return;
+  const gameContainer = document.querySelector(`[data-game-id="${gameId}"]`);
+  if (!gameContainer) return;
+
+  const liveGameElement = gameContainer.querySelector('.live-game-details');
+  const badgeElement = gameContainer.querySelector('a[target="_blank"]');
+  const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
+
+  // If game is transitioning from UPCOMING to LIVE, we need to show the live game details section
+  if (liveGameElement && badgeElement?.textContent === 'UPCOMING') {
+    // Update the badge first
+    badgeElement.className = 'px-3 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors';
+    badgeElement.textContent = 'LIVE';
+
+    // Show the live game details section
+    liveGameElement.style.display = 'block';
+  }
+
+  // If no live game element or it's hidden, don't proceed with updates
+  if (!liveGameElement || liveGameElement.style.display === 'none') return;
 
   // Get current values before update
   const previousInning = liveGameElement.querySelector('.font-medium.text-gray-900')?.textContent;
@@ -35,9 +52,6 @@ async function updateLiveGameDetails(gameId) {
     team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'
   ) || [];
   const newOuts = liveGameDetails.situation?.outs || 0;
-
-  // Check if game is complete
-  const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
 
   // Format outs text with correct pluralization
   const outsText = newOuts === 1 ? '1 out' : `${newOuts} outs`;
@@ -124,7 +138,7 @@ async function updateLiveGameDetails(gameId) {
     stopLiveGamePolling(gameId);
     
     // Update the LIVE/ENDED badge
-    const badgeElement = document.querySelector(`[data-game-id="${gameId}"] a[href*="gameId"]`);
+    const badgeElement = document.querySelector(`[data-game-id="${gameId}"] a[href="${gamecastUrl}"]`);
     if (badgeElement) {
       badgeElement.className = 'px-3 py-0.5 bg-gray-600 text-white text-xs font-medium rounded-md hover:bg-gray-700 transition-colors';
       badgeElement.textContent = 'ENDED';
@@ -285,9 +299,12 @@ export async function renderSchedule(teamId, season) {
                       ${isComplete ? 'ENDED' : 'LIVE'}
                     </a>
                   ` : `
-                    <span class="px-3 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md">
+                    <a href="${gamecastUrl}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="px-3 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-medium rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
                       UPCOMING
-                    </span>
+                    </a>
                   `
                 : ''}
                 <div class="text-gray-500 dark:text-gray-400 w-7 flex items-center gap-1">
@@ -308,15 +325,15 @@ export async function renderSchedule(teamId, season) {
                 </div>
               </div>
             </div>
-            ${(isLive || (isToday && liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed)) && liveGameDetails ? `
-              <div class="px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700">
+            ${isToday ? `
+              <div class="px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700" style="display: ${currentTime >= gameStartTime ? 'block' : 'none'}">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center justify-between">
                     <div class="font-medium text-gray-900 dark:text-white">
-                      ${isComplete ? 'FINAL' : liveGameDetails.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
+                      ${isComplete ? 'FINAL' : liveGameDetails?.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
                     </div>
                     <div class="flex items-center gap-6">
-                      ${liveGameDetails.boxscore?.teams?.map(team => `
+                      ${liveGameDetails?.boxscore?.teams?.map(team => `
                         <div class="flex items-center gap-2">
                           <img 
                             src="${team.team?.logo}"
@@ -328,7 +345,7 @@ export async function renderSchedule(teamId, season) {
                       `).join('')}
                     </div>
                   </div>
-                  ${!isComplete ? `
+                  ${!isComplete && liveGameDetails ? `
                     <div class="flex items-center justify-between">
                       <div class="text-gray-600 dark:text-white">
                         ${liveGameDetails.situation?.outs === 1 ? '1 out' : `${liveGameDetails.situation?.outs || '0'} outs`}
