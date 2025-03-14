@@ -133,16 +133,40 @@ async function updateLiveGameDetails(gameId) {
 }
 
 // Function to start polling for a live game
-function startLiveGamePolling(gameId) {
+function startLiveGamePolling(gameId, startTime) {
   // Clear any existing interval for this game
   if (liveGameIntervals.has(gameId)) {
     clearInterval(liveGameIntervals.get(gameId));
   }
 
   // Set up new polling interval
-  const interval = setInterval(() => {
+  const interval = setInterval(async () => {
+    const now = new Date().getTime();
+    const gameStartTime = startTime.getTime();
+    
+    // If the game hasn't started yet but we're within 1 minute of start time
+    if (now < gameStartTime && now >= gameStartTime - 60000) {
+      // Check every 5 seconds as we get closer to game time
+      clearInterval(interval);
+      const newInterval = setInterval(() => updateLiveGameDetails(gameId), 5000);
+      liveGameIntervals.set(gameId, newInterval);
+      return;
+    }
+    
+    // If the game should have started
+    if (now >= gameStartTime) {
+      // Switch to normal 30-second polling
+      clearInterval(interval);
+      const newInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
+      liveGameIntervals.set(gameId, newInterval);
+      // Immediately update to show live status
+      updateLiveGameDetails(gameId);
+      return;
+    }
+    
+    // Otherwise just check if game started early
     updateLiveGameDetails(gameId);
-  }, 30000); // Update every 30 seconds
+  }, 60000); // Check every minute for upcoming games
 
   // Store the interval ID
   liveGameIntervals.set(gameId, interval);
@@ -333,21 +357,24 @@ export async function renderSchedule(teamId, season) {
       
       gamesListHtml = gamesList.join('');
 
-      // After rendering, start polling for any live games
+      // After rendering, start polling for any live games and upcoming games
       upcomingGames.forEach(async game => {
         const now = new Date();
-        const gameStartTime = new Date(game.date).getTime();
+        const gameDate = new Date(game.date);
+        const gameStartTime = gameDate.getTime();
         const currentTime = now.getTime();
         const fourHoursInMs = 4 * 60 * 60 * 1000;
         const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
+        const isUpcomingToday = gameDate.toDateString() === now.toDateString() && currentTime < gameStartTime;
 
-        if (isLive) {
+        // Start polling for both live games and upcoming games today
+        if (isLive || isUpcomingToday) {
           // Check if game is already complete before starting polling
           const liveGameDetails = await getLiveGameDetails(game.id);
           const isComplete = liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed || false;
           
           if (!isComplete) {
-            startLiveGamePolling(game.id);
+            startLiveGamePolling(game.id, gameDate);
           }
         }
       });
