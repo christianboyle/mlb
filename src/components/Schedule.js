@@ -138,7 +138,6 @@ async function updateLiveGameDetails(gameId) {
     stopLiveGamePolling(gameId);
     
     // Update the LIVE/ENDED badge
-    const badgeElement = document.querySelector(`[data-game-id="${gameId}"] a[href="${gamecastUrl}"]`);
     if (badgeElement) {
       badgeElement.className = 'px-3 py-0.5 bg-gray-600 text-white text-xs font-medium rounded-md hover:bg-gray-700 transition-colors';
       badgeElement.textContent = 'ENDED';
