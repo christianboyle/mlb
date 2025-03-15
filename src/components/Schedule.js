@@ -27,19 +27,25 @@ async function updateLiveGameDetails(gameId) {
   const liveGameElement = gameContainer.querySelector('.live-game-details');
   const badgeElement = gameContainer.querySelector('a[target="_blank"]');
   const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
+  
+  // Check if game is in progress based on API data
+  const gameState = liveGameDetails.header?.competitions?.[0]?.status?.type?.state;
+  const isInProgress = gameState === 'in' || (gameState === 'post' && !isComplete);
 
-  // If game is transitioning from UPCOMING to LIVE, we need to show the live game details section
-  if (liveGameElement && badgeElement?.textContent === 'UPCOMING') {
+  // If game is transitioning to live state
+  if (badgeElement?.textContent === 'UPCOMING' && isInProgress) {
     // Update the badge first
     badgeElement.className = 'px-3 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors';
     badgeElement.textContent = 'LIVE';
 
     // Show the live game details section
-    liveGameElement.style.display = 'block';
+    if (liveGameElement) {
+      liveGameElement.style.display = 'block';
+    }
   }
 
-  // If no live game element or it's hidden, don't proceed with updates
-  if (!liveGameElement || liveGameElement.style.display === 'none') return;
+  // If no live game element or it's hidden and game isn't in progress, don't proceed with updates
+  if (!liveGameElement || (liveGameElement.style.display === 'none' && !isInProgress)) return;
 
   // Get current values before update
   const previousInning = liveGameElement.querySelector('.font-medium.text-gray-900')?.textContent;
