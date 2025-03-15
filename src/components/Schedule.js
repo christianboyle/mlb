@@ -19,22 +19,33 @@ async function getLiveGameDetails(gameId) {
 // Function to update live game details in the DOM
 async function updateLiveGameDetails(gameId) {
   const liveGameDetails = await getLiveGameDetails(gameId);
-  if (!liveGameDetails) return;
+  if (!liveGameDetails) {
+    return;
+  }
 
   const gameContainer = document.querySelector(`[data-game-id="${gameId}"]`);
-  if (!gameContainer) return;
+  if (!gameContainer) {
+    return;
+  }
 
   const liveGameElement = gameContainer.querySelector('.live-game-details');
   const badgeElement = gameContainer.querySelector('a[target="_blank"]');
-  const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
   
-  // Check if game is in progress based on API data
+  // Check game state from API
+  const isComplete = liveGameDetails.header?.competitions?.[0]?.status?.type?.completed || false;
   const gameState = liveGameDetails.header?.competitions?.[0]?.status?.type?.state;
-  const isInProgress = gameState === 'in' || (gameState === 'post' && !isComplete);
+  const detail = liveGameDetails.header?.competitions?.[0]?.status?.type?.detail;
+  
+  // More comprehensive game state check
+  const isInProgress = gameState === 'in' || 
+                      (gameState === 'post' && !isComplete) ||
+                      (gameState === 'pre' && detail && detail !== 'Scheduled');
 
   // If game is transitioning to live state
-  if (badgeElement?.textContent === 'UPCOMING' && isInProgress) {
-    // Update the badge first
+  const currentBadgeText = badgeElement?.textContent?.trim();
+  
+  if (currentBadgeText === 'UPCOMING' && isInProgress) {
+    // Update the badge
     badgeElement.className = 'px-3 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors';
     badgeElement.textContent = 'LIVE';
 
@@ -44,8 +55,10 @@ async function updateLiveGameDetails(gameId) {
     }
   }
 
-  // If no live game element or it's hidden and game isn't in progress, don't proceed with updates
-  if (!liveGameElement || (liveGameElement.style.display === 'none' && !isInProgress)) return;
+  // If no live game element or game isn't in progress/complete, don't proceed with updates
+  if (!liveGameElement || (!isInProgress && !isComplete)) {
+    return;
+  }
 
   // Get current values before update
   const previousInning = liveGameElement.querySelector('.font-medium.text-gray-900')?.textContent;
@@ -158,18 +171,48 @@ function startLiveGamePolling(gameId, startTime) {
     clearInterval(liveGameIntervals.get(gameId));
   }
 
-  // Set up new polling interval
+  // Immediately check current state
+  const now = new Date().getTime();
+  const gameStartTime = startTime.getTime();
+
+  // If game has already started
+  if (now >= gameStartTime) {
+    const liveInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
+    liveGameIntervals.set(gameId, liveInterval);
+    // Immediately update to show live status
+    updateLiveGameDetails(gameId);
+    return;
+  }
+  
+  // If we're within 5 minutes of start time
+  if (now >= gameStartTime - 300000) {
+    const newInterval = setInterval(async () => {
+      const currentTime = new Date().getTime();
+      if (currentTime >= gameStartTime) {
+        clearInterval(newInterval);
+        const liveInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
+        liveGameIntervals.set(gameId, liveInterval);
+        // Immediately update to show live status
+        updateLiveGameDetails(gameId);
+      } else {
+        // Still check for early starts
+        updateLiveGameDetails(gameId);
+      }
+    }, 10000);
+    liveGameIntervals.set(gameId, newInterval);
+    return;
+  }
+
+  // Otherwise start with 1-minute polling
   const interval = setInterval(async () => {
     const now = new Date().getTime();
     const gameStartTime = startTime.getTime();
     
-    // If the game hasn't started yet but we're within 5 minutes of start time
-    if (now < gameStartTime && now >= gameStartTime - 300000) {
-      // Check every 10 seconds as we get closer to game time
+    // If we get within 5 minutes of start time
+    if (now >= gameStartTime - 300000) {
       clearInterval(interval);
       const newInterval = setInterval(async () => {
         const currentTime = new Date().getTime();
-        // If game should have started, switch to live polling
         if (currentTime >= gameStartTime) {
           clearInterval(newInterval);
           const liveInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
@@ -187,10 +230,9 @@ function startLiveGamePolling(gameId, startTime) {
     
     // If the game should have started
     if (now >= gameStartTime) {
-      // Switch to normal 30-second polling
       clearInterval(interval);
-      const newInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
-      liveGameIntervals.set(gameId, newInterval);
+      const liveInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
+      liveGameIntervals.set(gameId, liveInterval);
       // Immediately update to show live status
       updateLiveGameDetails(gameId);
       return;
@@ -198,21 +240,12 @@ function startLiveGamePolling(gameId, startTime) {
     
     // Otherwise just check if game started early
     updateLiveGameDetails(gameId);
-  }, 60000); // Check every minute for upcoming games
+  }, 60000);
 
-  // Store the interval ID
   liveGameIntervals.set(gameId, interval);
-
-  // Immediately check if game should be live
-  const now = new Date().getTime();
-  const gameStartTime = startTime.getTime();
-  if (now >= gameStartTime) {
-    clearInterval(interval);
-    const newInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
-    liveGameIntervals.set(gameId, newInterval);
-    // Immediately update to show live status
-    updateLiveGameDetails(gameId);
-  }
+  
+  // Do an immediate check for early starts
+  updateLiveGameDetails(gameId);
 }
 
 // Function to stop polling for a game
@@ -278,20 +311,16 @@ export async function renderSchedule(teamId, season) {
           minute: '2-digit'
         });
 
-        // Check if game is live using actual current time
-        const gameStartTime = date.getTime();
-        const currentTime = now.getTime();
-        const fourHoursInMs = 4 * 60 * 60 * 1000;
-        const isLive = currentTime >= gameStartTime && currentTime <= (gameStartTime + fourHoursInMs);
-
-        // Get live game details if the game is today (either live or completed)
+        // Get live game details if the game is today
         let liveGameDetails = null;
-        if (isToday && currentTime >= gameStartTime) {
+        if (isToday) {
           liveGameDetails = await getLiveGameDetails(game.id);
         }
 
-        // Check if game is complete
+        // Check if game is complete or in progress
         const isComplete = liveGameDetails?.header?.competitions?.[0]?.status?.type?.completed || false;
+        const gameState = liveGameDetails?.header?.competitions?.[0]?.status?.type?.state;
+        const isInProgress = gameState === 'in' || (gameState === 'post' && !isComplete);
 
         // Get ESPN gamecast URL
         const gamecastUrl = `https://www.espn.com/mlb/game/_/gameId/${game.id}`;
@@ -320,7 +349,7 @@ export async function renderSchedule(teamId, season) {
               </div>
               <div class="flex items-center gap-4">
                 ${isToday ? 
-                  currentTime >= gameStartTime ? `
+                  isComplete || isInProgress ? `
                     <a href="${gamecastUrl}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
@@ -355,7 +384,7 @@ export async function renderSchedule(teamId, season) {
               </div>
             </div>
             ${isToday ? `
-              <div class="px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700" style="display: ${currentTime >= gameStartTime ? 'block' : 'none'}">
+              <div class="px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700" style="display: ${isComplete || isInProgress ? 'block' : 'none'}">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center justify-between">
                     <div class="font-medium text-gray-900 dark:text-white">
