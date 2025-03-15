@@ -157,11 +157,24 @@ function startLiveGamePolling(gameId, startTime) {
     const now = new Date().getTime();
     const gameStartTime = startTime.getTime();
     
-    // If the game hasn't started yet but we're within 1 minute of start time
-    if (now < gameStartTime && now >= gameStartTime - 60000) {
-      // Check every 5 seconds as we get closer to game time
+    // If the game hasn't started yet but we're within 5 minutes of start time
+    if (now < gameStartTime && now >= gameStartTime - 300000) {
+      // Check every 10 seconds as we get closer to game time
       clearInterval(interval);
-      const newInterval = setInterval(() => updateLiveGameDetails(gameId), 5000);
+      const newInterval = setInterval(async () => {
+        const currentTime = new Date().getTime();
+        // If game should have started, switch to live polling
+        if (currentTime >= gameStartTime) {
+          clearInterval(newInterval);
+          const liveInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
+          liveGameIntervals.set(gameId, liveInterval);
+          // Immediately update to show live status
+          updateLiveGameDetails(gameId);
+        } else {
+          // Still check for early starts
+          updateLiveGameDetails(gameId);
+        }
+      }, 10000);
       liveGameIntervals.set(gameId, newInterval);
       return;
     }
@@ -183,6 +196,17 @@ function startLiveGamePolling(gameId, startTime) {
 
   // Store the interval ID
   liveGameIntervals.set(gameId, interval);
+
+  // Immediately check if game should be live
+  const now = new Date().getTime();
+  const gameStartTime = startTime.getTime();
+  if (now >= gameStartTime) {
+    clearInterval(interval);
+    const newInterval = setInterval(() => updateLiveGameDetails(gameId), 30000);
+    liveGameIntervals.set(gameId, newInterval);
+    // Immediately update to show live status
+    updateLiveGameDetails(gameId);
+  }
 }
 
 // Function to stop polling for a game
