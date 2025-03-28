@@ -1,4 +1,4 @@
-import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR, ALL_TEAMS, getTeamById, getTeamBySlug } from './espn.js';
+import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR, ALL_TEAMS, getTeamById, getTeamBySlug, getScores, getTeamRecord, isPastOpeningDay } from './espn.js';
 import { renderScores } from './components/Scores.js';
 import { renderSchedule } from './components/Schedule.js';
 import { renderMobileNav } from './components/MobileNav.js';
@@ -205,9 +205,8 @@ async function renderHome({ teamId, params }) {
         `;
         document.getElementById('standings').innerHTML = standingsHtml;
         
-        // For 2025 always show spring training standings, otherwise show regular season
-        // Make sure we're converting to string for comparison
-        const showSpringTraining = season.toString() === '2025' ? true : false;
+        // For 2025, show spring training only if we're not past opening day
+        const showSpringTraining = season.toString() === '2025' ? !isPastOpeningDay(season) : false;
         
         // Render standings with appropriate type
         await renderDivisionStandings(teamId, season, showSpringTraining);
@@ -285,9 +284,9 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
   const standingsList = document.getElementById('standings-list');
   if (!standingsList) return;
   
-  // Force spring training for 2025
+  // For 2025, show spring training only if we're not past opening day
   if (season.toString() === '2025') {
-    showSpringTraining = true;
+    showSpringTraining = !isPastOpeningDay(season);
   }
   
   standingsList.innerHTML = '<div class="mt-6">Loading standings...</div>';

@@ -1,20 +1,8 @@
-import { getSchedule, getTeamById } from '../espn.js';
+import { getSchedule, getTeamById, getLiveGameDetails, isPastOpeningDay } from '../espn.js';
 import { renderScheduleControls, updateScheduleSpringTrainingButton } from './ScheduleControls.js';
 
 // Store intervals by game ID to clean them up later
 const liveGameIntervals = new Map();
-
-// Add function to fetch live game details
-async function getLiveGameDetails(gameId) {
-  try {
-    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${gameId}`);
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching live game details:', error);
-    return null;
-  }
-}
 
 // Function to update live game details in the DOM
 async function updateLiveGameDetails(gameId) {
@@ -462,7 +450,7 @@ export async function renderSchedule(teamId, season) {
           <div id="schedule-game-count" class="text-sm text-gray-500">
             ${upcomingRegularGames.length} Games
           </div>
-          ${renderScheduleControls()}
+          ${!isPastOpeningDay(season) ? renderScheduleControls() : '<div></div>'}
         </div>
 
         <!-- Games List -->
@@ -476,7 +464,7 @@ export async function renderSchedule(teamId, season) {
 
     // Add event listener for spring training toggle
     const springTrainingToggle = document.getElementById('schedule-spring-training-toggle');
-    if (springTrainingToggle) {
+    if (springTrainingToggle && !isPastOpeningDay(season)) {
       springTrainingToggle.addEventListener('click', (e) => {
         const button = e.currentTarget;
         const newEnabled = button.dataset.enabled !== 'true';
@@ -503,9 +491,9 @@ export async function renderSchedule(teamId, season) {
       });
     }
 
-    // Initial state - show spring training games for 2025, hide for other years
+    // Initial state - show spring training games for 2025 only if we're not past opening day
     if (springTrainingToggle) {
-      const shouldShowSpringTraining = season === 2025;
+      const shouldShowSpringTraining = season === 2025 && !isPastOpeningDay(season);
       updateScheduleSpringTrainingButton(shouldShowSpringTraining);
       
       // Update initial visibility of spring training games
@@ -521,7 +509,7 @@ export async function renderSchedule(teamId, season) {
         firstVisibleItem.style.borderTopWidth = '0';
       }
 
-      // Update game count
+      // Update game count to only include visible games
       const visibleGames = Array.from(document.querySelectorAll('#schedule-list > div')).filter(
         div => div.style.display !== 'none' && !div.classList.contains('mt-6')
       );
