@@ -353,7 +353,7 @@ export async function renderSchedule(teamId, season) {
                     </a>
                   `
                 : ''}
-                <div class="text-gray-500 dark:text-gray-400 w-7 flex items-center gap-1">
+                <div class="text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   ${isHome ? `
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-4 w-4">
                       <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
