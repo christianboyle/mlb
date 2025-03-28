@@ -1,4 +1,4 @@
-import { getScores, ALL_TEAMS, getTeamRecord, getTeamById } from '../espn.js';
+import { getScores, ALL_TEAMS, getTeamRecord, getTeamById, isPastOpeningDay } from '../espn.js';
 import { renderScoresControls, updateSpringTrainingButton } from './ScoresControls.js';
 
 export async function renderScores(teamId, season) {
@@ -23,8 +23,11 @@ export async function renderScores(teamId, season) {
       // First filter out upcoming games (no winner set)
       const completedGames = events.filter(e => e.competitions?.competitors?.some(c => c.winner !== undefined));
       
-      // For 2025, only show spring training games
+      // For 2025, show regular season games after opening day
       if (season === 2025) {
+        if (isPastOpeningDay(season)) {
+          return completedGames.filter(e => !e.isSpringTraining);
+        }
         return showSpringTraining ? completedGames.filter(e => e.isSpringTraining) : [];
       }
       
@@ -35,11 +38,12 @@ export async function renderScores(teamId, season) {
       return completedGames.filter(e => !e.isSpringTraining);
     };
 
-    // Check if we have spring training games
+    // Check if we have spring training games and if we're past opening day
     const hasSpringTraining = data.events?.some(e => e.isSpringTraining);
+    const pastOpeningDay = isPastOpeningDay(season);
 
-    // Initialize spring training state - default to true for 2025, false otherwise
-    let showSpringTraining = season === 2025;
+    // Initialize spring training state - show spring training only before opening day
+    let showSpringTraining = season === 2025 && !pastOpeningDay;
 
     // Initial render with filtered events
     let filteredEvents = filterBySeasonType(data.events, showSpringTraining);
@@ -48,9 +52,13 @@ export async function renderScores(teamId, season) {
       const gamesListContainer = document.getElementById('games-list');
       if (!gamesListContainer) return;
 
-      // For 2025 or when no filtered events, show empty state
-      if ((season === 2025 && !showSpringTraining) || filteredEvents.length === 0) {
-        gamesListContainer.innerHTML = '<div class="mt-6 text-gray-600 dark:text-gray-400">Opening Day is on Thursday, March 27.</div>';
+      // Show empty state only if we have no games to display
+      if (filteredEvents.length === 0) {
+        // If we're past opening day, show a different message
+        const message = isPastOpeningDay(season) 
+          ? 'No games played yet.'
+          : 'Opening Day is on Thursday, March 27.';
+        gamesListContainer.innerHTML = `<div class="mt-6 text-gray-600 dark:text-gray-400">${message}</div>`;
         const gamesCount = document.querySelector('.text-gray-500');
         if (gamesCount) gamesCount.textContent = '0 Games';
         return;
@@ -141,7 +149,7 @@ export async function renderScores(teamId, season) {
           <div class="text-sm text-gray-500">
             ${filteredEvents.length} Games
           </div>
-          ${renderScoresControls()}
+          ${hasSpringTraining && !pastOpeningDay ? renderScoresControls() : '<div></div>'}
         </div>
 
         <!-- Games List -->
@@ -156,7 +164,7 @@ export async function renderScores(teamId, season) {
     const dateSortToggle = document.getElementById('date-sort-toggle');
 
     // Initialize controls
-    if (springTrainingToggle && hasSpringTraining) {
+    if (springTrainingToggle && hasSpringTraining && !pastOpeningDay) {
       springTrainingToggle.classList.remove('hidden');
       springTrainingToggle.dataset.enabled = showSpringTraining.toString();
       updateSpringTrainingButton(showSpringTraining);

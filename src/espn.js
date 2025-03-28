@@ -219,15 +219,12 @@ async function fetchGames(teamId, season, type) {
 
 export async function getScores(teamId, season) {
   try {
-    // For 2025, only fetch spring training games
-    if (season === 2025) {
+    // For 2025, show spring training games only if we're not past opening day
+    if (season === 2025 && !isPastOpeningDay(season)) {
       const springRes = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
       );
       const springData = await springRes.json();
-
-      // Initialize spring training state - default to true for 2025 during spring training
-      let showSpringTraining = true;
 
       return {
         events: [
@@ -263,7 +260,7 @@ export async function getScores(teamId, season) {
       };
     }
 
-    // For other seasons, fetch all game types
+    // For other seasons or after opening day, fetch all game types
     // Fetch spring training games
     const springRes = await fetch(
       `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
@@ -400,8 +397,8 @@ export async function getTeamRecord(teamId, season) {
     // Convert season to a number for consistent comparison
     const seasonNum = parseInt(season);
     
-    // For 2025 or if we're in spring training, show spring training record
-    if (seasonNum === 2025) {
+    // For 2025, show spring training record only if we're not past opening day
+    if (seasonNum === 2025 && !isPastOpeningDay(season)) {
       const springRes = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${seasonNum}&seasontype=1`
       );
@@ -746,4 +743,25 @@ NL_CENTRAL_TEAMS.forEach(team => {
 
 NL_WEST_TEAMS.forEach(team => {
   team.slug = teamNameToSlug(team.name);
-}); 
+});
+
+// Helper function to check if we're past opening day for a given season
+export function isPastOpeningDay(season) {
+  // Opening day for 2025 was March 27
+  const openingDay = new Date(2025, 2, 27); // Month is 0-based, so 2 = March
+  const today = new Date();
+  
+  return today > openingDay;
+}
+
+// Helper function to fetch live game details
+export async function getLiveGameDetails(gameId) {
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${gameId}`);
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching live game details:', error);
+    return null;
+  }
+} 
