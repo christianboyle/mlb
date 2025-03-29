@@ -39,9 +39,51 @@ async function updateLiveGameDetails(gameId) {
     badgeElement.className = 'px-3 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors';
     badgeElement.textContent = 'LIVE';
 
-    // Show the live game details section
+    // Show and populate the live game details section
     if (liveGameElement) {
       liveGameElement.style.display = 'block';
+      // Populate the scoreboard content immediately
+      liveGameElement.innerHTML = `
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <div class="font-medium text-gray-900 dark:text-white">
+              ${isComplete ? 'FINAL' : liveGameDetails?.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
+            </div>
+            <div class="flex items-center gap-6">
+              ${liveGameDetails?.boxscore?.teams?.map((team, index) => `
+                <div class="flex items-center gap-2">
+                  <img 
+                    src="${team.team?.logo}"
+                    alt="${team.team?.displayName || ''}"
+                    class="h-4 w-4"
+                  />
+                  <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          ${!isComplete ? `
+            <div class="flex items-center justify-between">
+              <div class="text-gray-600 dark:text-white">
+                ${liveGameDetails.situation?.outs === 1 ? '1 out' : `${liveGameDetails.situation?.outs || '0'} outs`}
+              </div>
+              ${[
+                liveGameDetails.situation?.onFirst ? '🏃1B' : '',
+                liveGameDetails.situation?.onSecond ? '🏃2B' : '',
+                liveGameDetails.situation?.onThird ? '🏃3B' : ''
+              ].filter(Boolean).length > 0 ? `
+                <div class="text-gray-600 dark:text-white text-right">
+                  ${[
+                    liveGameDetails.situation?.onFirst ? '🏃1B' : '',
+                    liveGameDetails.situation?.onSecond ? '🏃2B' : '',
+                    liveGameDetails.situation?.onThird ? '🏃3B' : ''
+                  ].filter(Boolean).join(' ')}
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
     }
   }
 
