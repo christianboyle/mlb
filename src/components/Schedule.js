@@ -39,11 +39,19 @@ async function updateLiveGameDetails(gameId) {
     badgeElement.className = 'px-3 py-0.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors';
     badgeElement.textContent = 'LIVE';
 
+    // Create live game details section if it doesn't exist
+    if (!liveGameElement) {
+      const liveGameDetailsSection = document.createElement('div');
+      liveGameDetailsSection.className = 'px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700';
+      gameContainer.appendChild(liveGameDetailsSection);
+    }
+
     // Show and populate the live game details section
-    if (liveGameElement) {
-      liveGameElement.style.display = 'block';
+    const liveGameDetailsSection = gameContainer.querySelector('.live-game-details');
+    if (liveGameDetailsSection) {
+      liveGameDetailsSection.style.display = 'block';
       // Populate the scoreboard content immediately
-      liveGameElement.innerHTML = `
+      liveGameDetailsSection.innerHTML = `
         <div class="flex flex-col gap-1">
           <div class="flex items-center justify-between">
             <div class="font-medium text-gray-900 dark:text-white">
