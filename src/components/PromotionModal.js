@@ -70,6 +70,32 @@ export function initPromotionModal() {
       border-radius: 8px;
       margin: 16px 0;
     }
+    .avgrund-popup .modal-content .promotion-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-top: 16px;
+      padding: 8px 12px;
+      background: #f3f4f6;
+      border-radius: 6px;
+    }
+    .avgrund-popup.dark .modal-content .promotion-link {
+      color: #60a5fa;
+      background: #374151;
+    }
+    .avgrund-popup .modal-content .promotion-link:hover {
+      text-decoration: underline;
+      opacity: 0.9;
+      background: #e5e7eb;
+    }
+    .avgrund-popup.dark .modal-content .promotion-link:hover {
+      background: #4b5563;
+    }
     .avgrund-popup .modal-footer {
       margin: 16px -24px -24px -24px;
       padding: 16px 24px;
@@ -84,16 +110,18 @@ export function initPromotionModal() {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: #3b82f6;
+      color: #6b7280;
       text-decoration: none;
       font-size: 0.875rem;
       font-weight: 500;
+      transition: all 0.2s;
     }
     .avgrund-popup.dark .modal-footer a {
-      color: #60a5fa;
+      color: #9ca3af;
     }
     .avgrund-popup .modal-footer a:hover {
       text-decoration: underline;
+      opacity: 0.9;
     }
     .avgrund-popup button.close-button {
       background: none;
@@ -142,15 +170,21 @@ export function initPromotionModal() {
     function Avgrund() {
       const CLOSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
       const EXTERNAL_LINK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+      const CALENDAR_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>';
 
       const templates = {
         header: (title) => '<div class="modal-header"><h3>' + title + '</h3><button class="close-button" onclick="avgrund.close()" aria-label="Close">' + CLOSE_ICON + '</button></div>',
         
-        content: (html) => '<div class="modal-content">' + html + '</div>',
+        content: (html, url) => '<div class="modal-content">' + 
+          html + 
+          (url ? '<a href="' + url + '" class="promotion-link" target="_blank" rel="noopener noreferrer">More Information ' + EXTERNAL_LINK_ICON + '</a>' : '') +
+          '</div>',
         
         paragraph: (text) => '<p>' + text + '</p>',
         
-        footer: (url) => url ? '<div class="modal-footer"><a href="' + url + '" target="_blank" rel="noopener noreferrer">More Information ' + EXTERNAL_LINK_ICON + '</a></div>' : '',
+        footer: () => '<div class="modal-footer">' +
+          '<a href="https://www.mlb.com/royals/tickets/promotions" target="_blank" rel="noopener noreferrer">' + CALENDAR_ICON + ' View All Promotions</a>' +
+          '</div>',
         
         formatContent: (content) => {
           return content
@@ -201,8 +235,8 @@ export function initPromotionModal() {
 
         popup.innerHTML = (
           templates.header(title) +
-          templates.content(templates.formatContent(content)) +
-          templates.footer(url)
+          templates.content(templates.formatContent(content), url) +
+          templates.footer()
         );
         
         document.body.appendChild(overlay);
