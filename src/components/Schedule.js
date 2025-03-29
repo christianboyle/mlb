@@ -380,8 +380,8 @@ export async function renderSchedule(teamId, season) {
                       ${hasPromotion ? `
                         <div 
                           class="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full cursor-pointer ml-0.5" 
-                          title="${hasPromotion.name}"
-                          onclick="alert('${hasPromotion.name}\\n\\n${hasPromotion.description}')"
+                          title="${hasPromotion.name.replace(/"/g, '&quot;')}"
+                          onclick="alert('${hasPromotion.name.replace(/'/g, "\\'")}\\n\\n${hasPromotion.description.replace(/'/g, "\\'")}')"
                         ></div>
                       ` : ''}
                     </div>
