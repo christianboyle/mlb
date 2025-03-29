@@ -1,22 +1,17 @@
 // Remove the direct import since we'll fetch the data
 export async function getTeamPromotions(teamId) {
-  console.log('getTeamPromotions called with teamId:', teamId);
-  
   // For Royals (teamId: 7), use static data
   if (String(teamId) === '7') {
     try {
-      console.log('Fetching static data for Royals');
       const response = await fetch('/data/royals-promotions.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const royalsPromotions = await response.json();
-      console.log('Static data loaded:', royalsPromotions);
       
       const promotions = {};
       const games = royalsPromotions.events?.game || royalsPromotions.game || [];
       if (games.length > 0) {
-        console.log('Processing', games.length, 'games');
         games.forEach(game => {
           if (game.promotion) {
             const date = game.game_date.split('T')[0];
@@ -37,14 +32,10 @@ export async function getTeamPromotions(teamId) {
                 description: formattedPromotions,
                 url: validPromotions[0]?.alt_page_url || null
               };
-              console.log('Processed promotion:', promotions[date]);
             }
           }
         });
-      } else {
-        console.log('No games found in data:', royalsPromotions);
       }
-      console.log('Final processed promotions:', promotions);
       return promotions;
     } catch (error) {
       console.error('Error loading Royals promotions:', error);
@@ -53,7 +44,6 @@ export async function getTeamPromotions(teamId) {
   }
 
   // For other teams, try the API
-  console.log('Using API for non-Royals team');
   const params = new URLSearchParams();
   
   // Add parameters one by one to ensure proper handling of arrays
@@ -101,7 +91,6 @@ export async function getTeamPromotions(teamId) {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      console.error('Failed to parse response as JSON. Response:', text.substring(0, 200));
       throw new Error('Invalid JSON response from server');
     }
     
