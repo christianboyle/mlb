@@ -58,19 +58,45 @@ export function initPromotionModal() {
       white-space: pre-wrap;
       line-height: 1.6;
     }
-    .avgrund-popup .modal-content p {
-      margin: 0 0 16px 0;
+    .avgrund-popup .promotion {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
     }
-    .avgrund-popup .modal-content p:last-child {
+    .avgrund-popup.dark .promotion {
+      border-bottom-color: #374151;
+    }
+    .avgrund-popup .promotion:last-child {
       margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
     }
-    .avgrund-popup .modal-content img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
+    .avgrund-popup .promotion-type {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+    .avgrund-popup.dark .promotion-type {
+      color: #f3f4f6;
+    }
+    .avgrund-popup .promotion-description {
+      margin: 0 0 16px 0;
+      color: #4b5563;
+    }
+    .avgrund-popup.dark .promotion-description {
+      color: #9ca3af;
+    }
+    .avgrund-popup .promotion-image {
       margin: 16px 0;
+      border-radius: 8px;
+      overflow: hidden;
     }
-    .avgrund-popup .modal-content .promotion-link {
+    .avgrund-popup .promotion-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .avgrund-popup .promotion-link {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -79,21 +105,20 @@ export function initPromotionModal() {
       font-size: 0.875rem;
       font-weight: 500;
       transition: all 0.2s;
-      margin-top: 16px;
       padding: 8px 12px;
       background: #f3f4f6;
       border-radius: 6px;
     }
-    .avgrund-popup.dark .modal-content .promotion-link {
+    .avgrund-popup.dark .promotion-link {
       color: #60a5fa;
       background: #374151;
     }
-    .avgrund-popup .modal-content .promotion-link:hover {
+    .avgrund-popup .promotion-link:hover {
       text-decoration: underline;
       opacity: 0.9;
       background: #e5e7eb;
     }
-    .avgrund-popup.dark .modal-content .promotion-link:hover {
+    .avgrund-popup.dark .promotion-link:hover {
       background: #4b5563;
     }
     .avgrund-popup .modal-footer {
@@ -175,24 +200,49 @@ export function initPromotionModal() {
       const templates = {
         header: (title) => '<div class="modal-header"><h3>' + title + '</h3><button class="close-button" onclick="avgrund.close()" aria-label="Close">' + CLOSE_ICON + '</button></div>',
         
-        content: (html, url) => '<div class="modal-content">' + 
-          html + 
-          (url ? '<a href="' + url + '" class="promotion-link" target="_blank" rel="noopener noreferrer">More Information ' + EXTERNAL_LINK_ICON + '</a>' : '') +
-          '</div>',
+        promotion: (p) => {
+          const imageHtml = p.image_url 
+            ? '<div class="mt-4 mb-6"><img src="' + p.image_url + '" alt="' + p.type + '" class="rounded-lg shadow-lg"></div>'
+            : '';
+
+          const linkHtml = p.url
+            ? '<div class="mt-4"><a href="' + p.url + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"><span>More Information</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a></div>'
+            : '';
+
+          const nameHtml = p.name
+            ? '<div class="text-gray-700 dark:text-gray-300 mt-2">' + p.name + '</div>'
+            : '';
+
+          const distributionHtml = p.distribution
+            ? '<div class="text-sm text-gray-600 dark:text-gray-400 mt-1">' + p.distribution + '</div>'
+            : '';
+
+          const presenterHtml = p.presenter
+            ? '<div class="text-sm text-gray-500 dark:text-gray-500 mt-1">Presented by ' + p.presenter + '</div>'
+            : '';
+
+          const descriptionHtml = p.description
+            ? '<div class="mt-2 text-gray-700 dark:text-gray-300">' + p.description + '</div>'
+            : '';
+
+          return '<div class="promotion mb-8 last:mb-0">' +
+            '<h3 class="text-lg font-semibold text-gray-900 dark:text-white">' + p.type + '</h3>' +
+            nameHtml +
+            distributionHtml +
+            presenterHtml +
+            descriptionHtml +
+            imageHtml +
+            linkHtml +
+            '</div>';
+        },
         
-        paragraph: (text) => '<p>' + text + '</p>',
+        content: (promotions) => '<div class="modal-content">' + 
+          promotions.map(p => templates.promotion(p)).join('') +
+          '</div>',
         
         footer: () => '<div class="modal-footer">' +
           '<a href="https://www.mlb.com/royals/tickets/promotions" target="_blank" rel="noopener noreferrer">' + CALENDAR_ICON + ' View All Promotions</a>' +
-          '</div>',
-        
-        formatContent: (content) => {
-          return content
-            .split('\\n\\n')
-            .filter(p => p.trim())
-            .map(p => templates.paragraph(p.trim().replace(/\\n/g, '<br>')))
-            .join('');
-        }
+          '</div>'
       };
 
       const overlay = document.createElement('div');
@@ -227,7 +277,7 @@ export function initPromotionModal() {
         isOpen = false;
       };
       
-      this.open = function(title, content, url) {
+      this.open = function(title, promotions) {
         // If already open, clean up first
         if (isOpen) {
           cleanup();
@@ -235,7 +285,7 @@ export function initPromotionModal() {
 
         popup.innerHTML = (
           templates.header(title) +
-          templates.content(templates.formatContent(content), url) +
+          templates.content(promotions) +
           templates.footer()
         );
         
@@ -266,16 +316,16 @@ export function initPromotionModal() {
     
     var avgrund = new Avgrund();
     
-    window.showPromotionModal = function(title, description, url) {
-      avgrund.open(title, description, url);
+    window.showPromotionModal = function(title, promotions) {
+      avgrund.open(title, promotions);
     };
   `;
   document.head.appendChild(script);
 }
 
 // Show promotion modal
-export function showPromotionModal(title, description, url) {
+export function showPromotionModal(title, promotions) {
   if (typeof avgrund !== 'undefined') {
-    avgrund.open(title, description, url);
+    avgrund.open(title, promotions);
   }
 } 

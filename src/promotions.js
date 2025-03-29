@@ -23,14 +23,17 @@ export async function getTeamPromotions(teamId) {
             const validPromotions = promotionArray.filter(p => p.promotion_types || p.description);
             
             if (validPromotions.length > 0) {
-              const formattedPromotions = validPromotions
-                .map(p => `${p.promotion_types || 'Promotion'}\\n${p.description || 'No description available'}`)
-                .join('\\n\\n');
-
               promotions[date] = {
-                name: validPromotions.length > 1 ? 'Multiple Promotions' : 'Single Promotion',
-                description: formattedPromotions,
-                url: validPromotions[0]?.alt_page_url || null
+                name: validPromotions.length > 1 ? 'Multiple Promotions' : validPromotions[0].promotion_types || 'Promotion',
+                promotions: validPromotions.map(p => ({
+                  type: p.promotion_types || 'Promotion',
+                  name: p.offer_name || null,
+                  description: p.description || null,
+                  image_url: p.image_url || null,
+                  url: p.alt_page_url || null,
+                  distribution: p.distribution || null,
+                  presenter: p.presented_by || null
+                }))
               };
             }
           }
@@ -100,10 +103,19 @@ export async function getTeamPromotions(teamId) {
       data.game.forEach(game => {
         if (game.promotion) {
           const date = game.game_date.split('T')[0];
+          const promotionArray = Array.isArray(game.promotion) ? game.promotion : [game.promotion];
+          
           promotions[date] = {
-            name: game.promotion.promotion_types,
-            description: game.promotion.description,
-            url: game.promotion.alt_page_url || null
+            name: promotionArray.length > 1 ? 'Multiple Promotions' : promotionArray[0].promotion_types || 'Promotion',
+            promotions: promotionArray.map(p => ({
+              type: p.promotion_types || 'Promotion',
+              name: p.offer_name || null,
+              description: p.description || null,
+              image_url: p.image_url || null,
+              url: p.alt_page_url || null,
+              distribution: p.distribution || null,
+              presenter: p.presented_by || null
+            }))
           };
         }
       });
