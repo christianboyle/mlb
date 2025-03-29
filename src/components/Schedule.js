@@ -362,27 +362,30 @@ export async function renderSchedule(teamId, season) {
                   `
                 : ''}
                 <div class="text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  ${isHome ? `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-4 w-4">
-                      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
-                      <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    </svg>
-                  ` : `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin h-4 w-4">
-                      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                  `}
-                  ${game.isSpringTraining ? `
-                    <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                  ` : ''}
-                  ${hasPromotion ? `
-                    <div 
-                      class="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full cursor-pointer" 
-                      title="${hasPromotion.name}"
-                      onclick="alert('${hasPromotion.name}\\n\\n${hasPromotion.description}')"
-                    ></div>
-                  ` : ''}
+                  <div class="relative">
+                    ${isHome ? `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-4 w-4">
+                        <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
+                        <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      </svg>
+                    ` : `
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plane h-4 w-4">
+                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+                      </svg>
+                    `}
+                    <div class="flex items-center absolute top-1/2 -translate-y-1/2 -right-3">
+                      ${game.isSpringTraining ? `
+                        <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                      ` : ''}
+                      ${hasPromotion ? `
+                        <div 
+                          class="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full cursor-pointer ml-0.5" 
+                          title="${hasPromotion.name}"
+                          onclick="alert('${hasPromotion.name}\\n\\n${hasPromotion.description}')"
+                        ></div>
+                      ` : ''}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
