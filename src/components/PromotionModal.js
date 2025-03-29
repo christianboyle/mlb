@@ -41,6 +41,9 @@ export function initPromotionModal() {
       top: -24px;
       background: inherit;
       border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     .avgrund-popup.dark .modal-header {
       border-bottom-color: #374151;
@@ -49,7 +52,7 @@ export function initPromotionModal() {
       margin: 0;
       font-size: 1.25rem;
       font-weight: 600;
-      padding-right: 24px;
+      line-height: 1.2;
     }
     .avgrund-popup .modal-content {
       white-space: pre-wrap;
@@ -67,22 +70,45 @@ export function initPromotionModal() {
       border-radius: 8px;
       margin: 16px 0;
     }
+    .avgrund-popup .modal-footer {
+      margin: 16px -24px -24px -24px;
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+      background: inherit;
+      border-radius: 0 0 12px 12px;
+    }
+    .avgrund-popup.dark .modal-footer {
+      border-top-color: #374151;
+    }
+    .avgrund-popup .modal-footer a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .avgrund-popup.dark .modal-footer a {
+      color: #60a5fa;
+    }
+    .avgrund-popup .modal-footer a:hover {
+      text-decoration: underline;
+    }
     .avgrund-popup button.close-button {
-      position: absolute;
-      top: 12px;
-      right: 12px;
       background: none;
       border: none;
-      font-size: 1.5rem;
       cursor: pointer;
       color: #6b7280;
-      padding: 8px;
-      line-height: 1;
-      border-radius: 6px;
+      padding: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
+      margin-left: 8px;
     }
     .avgrund-popup button.close-button:hover {
       background: #f3f4f6;
@@ -102,7 +128,8 @@ export function initPromotionModal() {
         max-height: 100%;
         border-radius: 0;
       }
-      .avgrund-popup .modal-header {
+      .avgrund-popup .modal-header,
+      .avgrund-popup .modal-footer {
         border-radius: 0;
       }
     }
@@ -113,7 +140,8 @@ export function initPromotionModal() {
   const script = document.createElement('script');
   script.textContent = `
     function Avgrund() {
-      const CLOSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      const CLOSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      const EXTERNAL_LINK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
 
       const templates = {
         header: (title) => '<div class="modal-header"><h3>' + title + '</h3><button class="close-button" onclick="avgrund.close()" aria-label="Close">' + CLOSE_ICON + '</button></div>',
@@ -121,6 +149,8 @@ export function initPromotionModal() {
         content: (html) => '<div class="modal-content">' + html + '</div>',
         
         paragraph: (text) => '<p>' + text + '</p>',
+        
+        footer: (url) => url ? '<div class="modal-footer"><a href="' + url + '" target="_blank" rel="noopener noreferrer">More Information ' + EXTERNAL_LINK_ICON + '</a></div>' : '',
         
         formatContent: (content) => {
           return content
@@ -139,42 +169,79 @@ export function initPromotionModal() {
       if (document.documentElement.classList.contains('dark')) {
         popup.classList.add('dark');
       }
+
+      let isOpen = false;
+      let handleEscape;
+      let handleOverlayClick;
       
-      this.open = function(title, content) {
-        popup.innerHTML = templates.header(title) + templates.content(templates.formatContent(content));
+      const cleanup = () => {
+        if (handleEscape) {
+          document.removeEventListener('keydown', handleEscape);
+          handleEscape = null;
+        }
+        if (handleOverlayClick) {
+          overlay.removeEventListener('click', handleOverlayClick);
+          handleOverlayClick = null;
+        }
+        if (overlay.parentNode) {
+          document.body.removeChild(overlay);
+        }
+        if (popup.parentNode) {
+          document.body.removeChild(popup);
+        }
+        document.body.style.overflow = '';
+        isOpen = false;
+      };
+      
+      this.open = function(title, content, url) {
+        // If already open, clean up first
+        if (isOpen) {
+          cleanup();
+        }
+
+        popup.innerHTML = (
+          templates.header(title) +
+          templates.content(templates.formatContent(content)) +
+          templates.footer(url)
+        );
+        
         document.body.appendChild(overlay);
         document.body.appendChild(popup);
         document.body.style.overflow = 'hidden';
         
-        const handleEscape = (e) => {
+        handleEscape = (e) => {
           if (e.key === 'Escape') this.close();
         };
         document.addEventListener('keydown', handleEscape);
         
-        overlay.addEventListener('click', (e) => {
+        handleOverlayClick = (e) => {
           if (e.target === overlay) this.close();
-        });
+        };
+        overlay.addEventListener('click', handleOverlayClick);
+
+        isOpen = true;
       };
       
       this.close = function() {
-        document.body.removeChild(overlay);
-        document.body.removeChild(popup);
-        document.body.style.overflow = '';
+        cleanup();
       };
+
+      // Cleanup on page unload
+      window.addEventListener('unload', cleanup);
     }
     
     var avgrund = new Avgrund();
     
-    window.showPromotionModal = function(title, description) {
-      avgrund.open(title, description);
+    window.showPromotionModal = function(title, description, url) {
+      avgrund.open(title, description, url);
     };
   `;
   document.head.appendChild(script);
 }
 
 // Show promotion modal
-export function showPromotionModal(title, description) {
+export function showPromotionModal(title, description, url) {
   if (typeof avgrund !== 'undefined') {
-    avgrund.open(title, description);
+    avgrund.open(title, description, url);
   }
 } 
