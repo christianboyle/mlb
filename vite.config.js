@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
-    port: 3456,
+    port: 5173,
     proxy: {
       '/api': {
         target: 'https://site.api.espn.com',
@@ -11,12 +11,20 @@ export default defineConfig({
         headers: {
           'Origin': 'https://www.espn.com'
         }
+      },
+      '/data': {
+        target: 'http://localhost:3456',
+        changeOrigin: true
+      },
+      '/mlb': {
+        target: 'http://localhost:3456',
+        changeOrigin: true
       }
     }
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets'
+    emptyOutDir: true
   },
   css: {
     postcss: './postcss.config.js'
