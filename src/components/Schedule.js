@@ -1,5 +1,6 @@
 import { getSchedule, getTeamById, getLiveGameDetails, isPastOpeningDay } from '../espn.js';
 import { renderScheduleControls, updateScheduleSpringTrainingButton } from './ScheduleControls.js';
+import { getTeamPromotions } from '../promotions.js';
 
 // Store intervals by game ID to clean them up later
 const liveGameIntervals = new Map();
@@ -255,7 +256,10 @@ export async function renderSchedule(teamId, season) {
   cleanupAllPolling();
 
   try {
-    const data = await getSchedule(teamId, season);
+    const [data, promotions] = await Promise.all([
+      getSchedule(teamId, season),
+      getTeamPromotions(teamId)
+    ]);
     
     // Filter out games that have already happened
     const today = new Date();
@@ -315,6 +319,14 @@ export async function renderSchedule(teamId, season) {
         
         // Get full team info to access slug
         const opposingTeamInfo = getTeamById(opposingTeam.team.id);
+
+        // Check for promotions
+        const gameDate = date.toISOString().split('T')[0];
+        console.log('Checking for promotion on date:', gameDate);
+        const hasPromotion = promotions[gameDate];
+        if (hasPromotion) {
+          console.log('Found promotion for date:', gameDate, hasPromotion);
+        }
         
         return `
           <div data-game-id="${game.id}" ${game.isSpringTraining ? 'data-spring-training="true"' : ''} style="${game.isSpringTraining && season !== 2025 ? 'display: none;' : ''}">
@@ -368,10 +380,17 @@ export async function renderSchedule(teamId, season) {
                   ${game.isSpringTraining ? `
                     <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
                   ` : ''}
+                  ${hasPromotion ? `
+                    <div 
+                      class="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full cursor-pointer" 
+                      title="${hasPromotion.name}"
+                      onclick="alert('${hasPromotion.name}\\n\\n${hasPromotion.description}')"
+                    ></div>
+                  ` : ''}
                 </div>
               </div>
             </div>
-            ${isToday ? `
+            ${isComplete || isInProgress ? `
               <div class="px-0 min-[450px]:px-4 py-2 text-sm live-game-details border-t border-dotted border-gray-200 dark:border-gray-700" style="display: ${isComplete || isInProgress ? 'block' : 'none'}">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center justify-between">
@@ -391,7 +410,7 @@ export async function renderSchedule(teamId, season) {
                       `).join('')}
                     </div>
                   </div>
-                  ${!isComplete && liveGameDetails ? `
+                  ${liveGameDetails?.situation ? `
                     <div class="flex items-center justify-between">
                       <div class="text-gray-600 dark:text-white">
                         ${liveGameDetails.situation?.outs === 1 ? '1 out' : `${liveGameDetails.situation?.outs || '0'} outs`}

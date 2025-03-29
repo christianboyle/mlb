@@ -1,29 +1,28 @@
 import express from 'express';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const PORT = 3456;
+const port = process.env.PORT || 3456;
 
-// Proxy ESPN API requests
-app.use('/api', createProxyMiddleware({
-  target: 'https://site.api.espn.com',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api': ''
-  }
-}));
+// Enable CORS
+app.use(cors());
 
-// Serve static files
-app.use(express.static('dist'));
+// Serve static files from the dist directory (built frontend)
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// Serve index.html for all routes
+// Serve data files
+app.use('/data', express.static(path.join(__dirname, 'src', 'data')));
+
+// Catch-all route to serve index.html for client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 }); 
