@@ -322,11 +322,7 @@ export async function renderSchedule(teamId, season) {
 
         // Check for promotions
         const gameDate = date.toISOString().split('T')[0];
-        console.log('Checking for promotion on date:', gameDate);
         const hasPromotion = promotions[gameDate];
-        if (hasPromotion) {
-          console.log('Found promotion for date:', gameDate, hasPromotion);
-        }
         
         return `
           <div data-game-id="${game.id}" ${game.isSpringTraining ? 'data-spring-training="true"' : ''} style="${game.isSpringTraining && season !== 2025 ? 'display: none;' : ''}">
