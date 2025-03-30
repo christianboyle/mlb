@@ -513,7 +513,7 @@ export async function renderSchedule(teamId, season) {
           <div id="schedule-game-count" class="text-sm text-gray-500">
             ${upcomingRegularGames.length} Games
           </div>
-          ${!isPastOpeningDay(season) ? renderScheduleControls() : '<div></div>'}
+          ${renderScheduleControls(!isPastOpeningDay(season))}
         </div>
 
         <!-- Games List -->
@@ -542,7 +542,6 @@ export async function renderSchedule(teamId, season) {
         // Update first visible item's border
         const firstVisibleItem = document.querySelector('#schedule-list > div:not([style*="display: none"])');
         if (firstVisibleItem) {
-          // Remove top border from first visible item
           firstVisibleItem.style.borderTopWidth = '0';
         }
 
@@ -551,6 +550,84 @@ export async function renderSchedule(teamId, season) {
           div => div.style.display !== 'none' && !div.classList.contains('mt-6')
         );
         document.getElementById('schedule-game-count').textContent = `${visibleGames.length} Games`;
+      });
+    }
+
+    // Add event listener for date sort toggle
+    const dateSortToggle = document.getElementById('schedule-sort-toggle');
+
+    if (dateSortToggle) {
+      dateSortToggle.dataset.sort = 'asc';
+      dateSortToggle.addEventListener('click', () => {
+        const currentSort = dateSortToggle.dataset.sort;
+        const newSort = currentSort === 'desc' ? 'asc' : 'desc';
+        dateSortToggle.dataset.sort = newSort;
+        
+        // Update icon rotation
+        const icon = dateSortToggle.querySelector('svg');
+        icon.style.transform = newSort === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)';
+        
+        // Get all visible game elements, including their live game details if present
+        const gamesList = document.getElementById('schedule-list');
+        const games = Array.from(gamesList.querySelectorAll('div[data-game-id]')).filter(game => 
+          game.style.display !== 'none'
+        );
+
+        // Sort games by date
+        games.sort((a, b) => {
+          const dateTextA = a.querySelector('.w-14')?.textContent?.trim() || '';
+          const dateTextB = b.querySelector('.w-14')?.textContent?.trim() || '';
+          const timeA = dateTextA.split('\n')[1]?.trim() || '12:00 AM';
+          const timeB = dateTextB.split('\n')[1]?.trim() || '12:00 AM';
+          const dateA = new Date(`${dateTextA.split('\n')[0]} 2025 ${timeA}`);
+          const dateB = new Date(`${dateTextB.split('\n')[0]} 2025 ${timeB}`);
+          return newSort === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+
+        // Create a document fragment to minimize reflows
+        const fragment = document.createDocumentFragment();
+        
+        // Re-append games to the fragment
+        games.forEach((game, index) => {
+          // Clone the node to preserve event listeners
+          const gameClone = game.cloneNode(true);
+          
+          // Set border based on position
+          gameClone.style.borderTopWidth = index === 0 ? '0' : '1px';
+          
+          // Store the game ID for reference
+          const gameId = game.getAttribute('data-game-id');
+          
+          fragment.appendChild(gameClone);
+        });
+
+        // Clear the games list (except for the "no games" message if present)
+        const noGamesMessage = gamesList.querySelector('.mt-6');
+        gamesList.innerHTML = '';
+        if (noGamesMessage) {
+          gamesList.appendChild(noGamesMessage);
+        }
+        
+        // Append the sorted games
+        gamesList.appendChild(fragment);
+
+        // Re-initialize live game polling for today's games
+        games.forEach(game => {
+          const gameId = game.getAttribute('data-game-id');
+          const dateText = game.querySelector('.w-14')?.textContent?.trim() || '';
+          const timeText = dateText.split('\n')[1]?.trim() || '12:00 AM';
+          const gameDate = new Date(`${dateText.split('\n')[0]} 2025 ${timeText}`);
+          
+          const now = new Date();
+          const isToday = gameDate.toDateString() === now.toDateString();
+          
+          if (isToday) {
+            // Stop existing polling if any
+            stopLiveGamePolling(gameId);
+            // Start new polling
+            startLiveGamePolling(gameId, gameDate);
+          }
+        });
       });
     }
 
