@@ -64,6 +64,17 @@ export async function renderScores(teamId, season) {
         return;
       }
 
+      // Sort events based on current sort direction if sort toggle exists
+      const sortToggle = document.getElementById('scores-sort-toggle');
+      if (sortToggle) {
+        const sortDirection = sortToggle.dataset.sort || 'asc';
+        filteredEvents.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+      }
+
       const gamesHtml = `
         <div class="divide-y divide-gray-200 dark:divide-gray-800">
           ${filteredEvents.map(game => {
@@ -149,7 +160,7 @@ export async function renderScores(teamId, season) {
           <div class="text-sm text-gray-500">
             ${filteredEvents.length} Games
           </div>
-          ${hasSpringTraining && !pastOpeningDay ? renderScoresControls() : '<div></div>'}
+          ${renderScoresControls(hasSpringTraining && !pastOpeningDay)}
         </div>
 
         <!-- Games List -->
@@ -161,7 +172,7 @@ export async function renderScores(teamId, season) {
 
     // Add event listeners for controls
     const springTrainingToggle = document.getElementById('spring-training-toggle');
-    const dateSortToggle = document.getElementById('date-sort-toggle');
+    const dateSortToggle = document.getElementById('scores-sort-toggle');
 
     // Initialize controls
     if (springTrainingToggle && hasSpringTraining && !pastOpeningDay) {
