@@ -2,21 +2,40 @@ import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTR
 import { renderScores } from './components/Scores.js';
 import { renderSchedule } from './components/Schedule.js';
 import { renderMobileNav } from './components/MobileNav.js';
+import { startLiveScoresTicker } from './components/LiveScoresTicker.js';
 import { Router } from './router.js';
 import './style.css';
 
 const router = new Router();
+let liveScoresCleanup = null;
 
-// Toggle dark mode
-const toggleDarkMode = () => {
-  if (document.documentElement.classList.contains('dark')) {
-    document.documentElement.classList.remove('dark');
-    localStorage.theme = 'light';
-  } else {
+// Initialize theme based on OS preference
+function initializeTheme() {
+  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.documentElement.classList.add('dark');
-    localStorage.theme = 'dark';
+  } else {
+    document.documentElement.classList.remove('dark');
   }
-};
+}
+
+// Listen for OS theme changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (e.matches) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+});
+
+// Initialize theme on load
+initializeTheme();
+
+// Clean up on page unload
+window.addEventListener('unload', () => {
+  if (liveScoresCleanup) {
+    liveScoresCleanup();
+  }
+});
 
 async function renderHome({ teamId, params }) {
   const season = params.get('season') || CURRENT_SEASON;
@@ -76,26 +95,7 @@ async function renderHome({ teamId, params }) {
 
   const mainContent = `
     <div class="flex flex-col h-[calc(100vh_-_48px)] relative">
-      <button 
-        id="dark-mode-toggle"
-        class="absolute top-6 right-6 p-2 rounded-lg hover:bg-[#bbb] dark:hover:bg-gray-800 z-10"
-        aria-label="Toggle dark mode"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block h-5 w-5">
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2"></path>
-          <path d="M12 20v2"></path>
-          <path d="m4.93 4.93 1.41 1.41"></path>
-          <path d="m17.66 17.66 1.41 1.41"></path>
-          <path d="M2 12h2"></path>
-          <path d="M20 12h2"></path>
-          <path d="m6.34 17.66-1.41 1.41"></path>
-          <path d="m19.07 4.93-1.41 1.41"></path>
-        </svg>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block dark:hidden h-5 w-5">
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-        </svg>
-      </button>
+      <div id="live-scores-ticker"></div>
       <main class="flex-1 grid md:grid-cols-2 lg:grid-cols-3 pb-16 sm:pb-0">
         <div class="border-r border-gray-200 dark:border-gray-800 ${tab !== 'scores' ? 'sm:block hidden' : ''}">
           <section class="w-full mx-auto p-6 mb-[200px]">
@@ -178,18 +178,18 @@ async function renderHome({ teamId, params }) {
 
   // Wait for next tick to ensure DOM is updated
   setTimeout(async () => {
-    // Add dark mode toggle listener
-    document.getElementById('dark-mode-toggle')?.addEventListener('click', toggleDarkMode);
-
     if (teamId) {
+      // Render main content first
+      const renderPromises = [];
+
       // On desktop or if scores tab is active, render scores
       if (!tab || tab === 'scores') {
-        renderScores(teamId, season);
+        renderPromises.push(renderScores(teamId, season));
       }
 
       // On desktop or if schedule tab is active, render schedule
       if (!tab || tab === 'schedule') {
-        renderSchedule(teamId, DISPLAY_YEAR);
+        renderPromises.push(renderSchedule(teamId, DISPLAY_YEAR));
       }
 
       // On desktop or if division tab is active, render standings
@@ -209,8 +209,17 @@ async function renderHome({ teamId, params }) {
         const showSpringTraining = season.toString() === '2025' ? !isPastOpeningDay(season) : false;
         
         // Render standings with appropriate type
-        await renderDivisionStandings(teamId, season, showSpringTraining);
+        renderPromises.push(renderDivisionStandings(teamId, season, showSpringTraining));
       }
+
+      // Wait for all content to render
+      await Promise.all(renderPromises);
+
+      // Start live scores ticker after main content is loaded
+      if (liveScoresCleanup) {
+        liveScoresCleanup();
+      }
+      liveScoresCleanup = startLiveScoresTicker();
     }
 
     // Add event listener for team select
