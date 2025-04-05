@@ -106,13 +106,15 @@ export async function renderScores(teamId, season) {
               }">
                 <div class="flex items-center">
                   <div class="w-14 text-sm text-gray-600 dark:text-gray-400">${formattedDate}</div>
-                  <img 
-                    alt="${displayTeam.team.name}"
-                    src="${displayTeam.team.logo}"
-                    class="h-5 w-5"
-                    width="20"
-                    height="20"
-                  />
+                  <a href="/${displayTeamInfo?.slug || ''}" class="hover:opacity-80 transition-opacity">
+                    <img 
+                      alt="${displayTeam.team.name}"
+                      src="${displayTeam.team.logo}"
+                      class="h-5 w-5"
+                      width="20"
+                      height="20"
+                    />
+                  </a>
                   <a class="font-semibold ml-4" href="/${displayTeamInfo?.slug || ''}">${displayTeam.team.name}</a>
                 </div>
                 <div class="flex items-center gap-4">
@@ -142,13 +144,15 @@ export async function renderScores(teamId, season) {
       <div>
         <!-- Team Header -->
         <div class="flex items-center mb-2">
-          <img 
-            alt="Logo"
-            src="${currentTeam.logo}"
-            class="h-6 w-6"
-            width="24"
-            height="24"
-          />
+          <a href="/${currentTeam.slug || ''}" class="hover:opacity-80 transition-opacity">
+            <img 
+              alt="Logo"
+              src="${currentTeam.logo}"
+              class="h-6 w-6"
+              width="24"
+              height="24"
+            />
+          </a>
           <h1 class="font-semibold text-2xl ml-2">${currentTeam.name}</h1>
         </div>
 

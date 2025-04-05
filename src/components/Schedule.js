@@ -1,4 +1,4 @@
-import { getSchedule, getTeamById, getLiveGameDetails, isPastOpeningDay } from '../espn.js';
+import { getSchedule, getTeamById, getLiveGameDetails, isPastOpeningDay, getTeamByAbbrev } from '../espn.js';
 import { renderScheduleControls, updateScheduleSpringTrainingButton } from './ScheduleControls.js';
 import { getTeamPromotions } from '../promotions.js';
 import { initPromotionModal, showPromotionModal } from './PromotionModal.js';
@@ -60,11 +60,13 @@ async function updateLiveGameDetails(gameId) {
             <div class="flex items-center gap-6">
               ${liveGameDetails?.boxscore?.teams?.map((team, index) => `
                 <div class="flex items-center gap-2">
-                  <img 
-                    src="${team.team?.logo}"
-                    alt="${team.team?.displayName || ''}"
-                    class="h-4 w-4"
-                  />
+                  <a href="/${getTeamByAbbrev(team.team?.abbreviation)?.slug || ''}" class="hover:opacity-80 transition-opacity">
+                    <img 
+                      src="${team.team?.logo}"
+                      alt="${team.team?.displayName || ''}"
+                      class="h-4 w-4"
+                    />
+                  </a>
                   <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
                 </div>
               `).join('')}
@@ -149,11 +151,13 @@ async function updateLiveGameDetails(gameId) {
         <div class="flex items-center gap-6">
           ${liveGameDetails.boxscore?.teams?.map((team, index) => `
             <div class="flex items-center gap-2">
-              <img 
-                src="${team.team?.logo}"
-                alt="${team.team?.displayName || ''}"
-                class="h-4 w-4"
-              />
+              <a href="/${getTeamByAbbrev(team.team?.abbreviation)?.slug || ''}" class="hover:opacity-80 transition-opacity">
+                <img 
+                  src="${team.team?.logo}"
+                  alt="${team.team?.displayName || ''}"
+                  class="h-4 w-4"
+                />
+              </a>
               <span class="font-medium text-gray-900 dark:text-white ${previousScores[index] !== newScores[index] ? 'font-bold' : ''}">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
             </div>
           `).join('')}
@@ -386,13 +390,15 @@ export async function renderSchedule(teamId, season) {
                   ${formattedDate}
                   <div class="text-xs">${gameTime}</div>
                 </div>
-                <img 
-                  alt="${opposingTeam.team.name}"
-                  src="${opposingTeam.team.logo}"
-                  class="h-5 w-5"
-                  width="20"
-                  height="20"
-                />
+                <a href="/${opposingTeamInfo?.slug || ''}" class="hover:opacity-80 transition-opacity">
+                  <img 
+                    alt="${opposingTeam.team.name}"
+                    src="${opposingTeam.team.logo}"
+                    class="h-5 w-5"
+                    width="20"
+                    height="20"
+                  />
+                </a>
                 <a class="font-semibold ml-4" href="/${opposingTeamInfo?.slug || ''}">
                   ${opposingTeam.team.name}
                 </a>
@@ -444,11 +450,13 @@ export async function renderSchedule(teamId, season) {
                     <div class="flex items-center gap-6">
                       ${liveGameDetails?.boxscore?.teams?.map(team => `
                         <div class="flex items-center gap-2">
-                          <img 
-                            src="${team.team?.logo}"
-                            alt="${team.team?.displayName || ''}"
-                            class="h-4 w-4"
-                          />
+                          <a href="/${getTeamByAbbrev(team.team?.abbreviation)?.slug || ''}" class="hover:opacity-80 transition-opacity">
+                            <img 
+                              src="${team.team?.logo}"
+                              alt="${team.team?.displayName || ''}"
+                              class="h-4 w-4"
+                            />
+                          </a>
                           <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
                         </div>
                       `).join('')}
