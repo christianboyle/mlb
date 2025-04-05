@@ -326,13 +326,15 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
       return `
         <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2" ${team.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
           <div class="flex items-center">
-            <img 
-              src="${team.logo}"
-              alt="${team.name}"
-              class="h-5 w-5 ${team.color === '000000' ? 'dark:invert' : ''}"
-              width="20"
-              height="20"
-            />
+            <a href="/${teamInfo?.slug || ''}" class="hover:opacity-80 transition-opacity">
+              <img 
+                src="${team.logo}"
+                alt="${team.name}"
+                class="h-5 w-5 ${team.color === '000000' ? 'dark:invert' : ''}"
+                width="20"
+                height="20"
+              />
+            </a>
             <a href="/${teamInfo?.slug || ''}" class="font-semibold ml-4">${team.name}</a>
           </div>
           <div class="flex items-center gap-4">

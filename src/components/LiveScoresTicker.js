@@ -1,3 +1,5 @@
+import { getTeamByAbbrev } from '../espn.js';
+
 // Function to fetch live scores from the API
 async function fetchLiveScores() {
   try {
@@ -39,15 +41,23 @@ export async function renderLiveScoresTicker() {
       const homeTeam = game.teams.homeTeam;
       const inningInfo = game.status.shortDetail || game.status.detail;
       
+      // Get team info from our internal mapping using abbreviations
+      const awayTeamInfo = getTeamByAbbrev(awayTeam.abbrev);
+      const homeTeamInfo = getTeamByAbbrev(homeTeam.abbrev);
+      
       return `
         <div class="flex-none text-center px-4 py-2">
           <div class="flex justify-center items-center space-x-2">
-            <img src="${awayTeam.logo}" alt="${awayTeam.displayName}" class="h-4 w-4" />
+            <a href="/${awayTeamInfo?.slug || ''}" class="hover:opacity-80 transition-opacity">
+              <img src="${awayTeam.logo}" alt="${awayTeam.displayName}" class="h-4 w-4" />
+            </a>
             <span class="font-medium">${awayTeam.runs || '0'}</span>
           </div>
           <div class="text-xs text-gray-500 dark:text-gray-400">${inningInfo}</div>
           <div class="flex justify-center items-center space-x-2">
-            <img src="${homeTeam.logo}" alt="${homeTeam.displayName}" class="h-4 w-4" />
+            <a href="/${homeTeamInfo?.slug || ''}" class="hover:opacity-80 transition-opacity">
+              <img src="${homeTeam.logo}" alt="${homeTeam.displayName}" class="h-4 w-4" />
+            </a>
             <span class="font-medium">${homeTeam.runs || '0'}</span>
           </div>
         </div>

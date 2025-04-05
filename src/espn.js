@@ -745,6 +745,46 @@ NL_WEST_TEAMS.forEach(team => {
   team.slug = teamNameToSlug(team.name);
 });
 
+// Mapping between team abbreviations and team IDs
+export const TEAM_ABBREV_TO_ID = {
+  'BAL': '1',  // Baltimore Orioles
+  'BOS': '2',  // Boston Red Sox
+  'LAA': '3',  // Los Angeles Angels
+  'CHW': '4',  // Chicago White Sox
+  'CLE': '5',  // Cleveland Guardians
+  'DET': '6',  // Detroit Tigers
+  'KC': '7',   // Kansas City Royals
+  'MIL': '8',  // Milwaukee Brewers
+  'MIN': '9',  // Minnesota Twins
+  'NYY': '10', // New York Yankees
+  'OAK': '11', // Oakland Athletics
+  'SEA': '12', // Seattle Mariners
+  'TEX': '13', // Texas Rangers
+  'TOR': '14', // Toronto Blue Jays
+  'ATL': '15', // Atlanta Braves
+  'CHC': '16', // Chicago Cubs
+  'CIN': '17', // Cincinnati Reds
+  'HOU': '18', // Houston Astros
+  'LAD': '19', // Los Angeles Dodgers
+  'WSH': '20', // Washington Nationals
+  'NYM': '21', // New York Mets
+  'PHI': '22', // Philadelphia Phillies
+  'PIT': '23', // Pittsburgh Pirates
+  'STL': '24', // St. Louis Cardinals
+  'SD': '25',  // San Diego Padres
+  'SF': '26',  // San Francisco Giants
+  'COL': '27', // Colorado Rockies
+  'MIA': '28', // Miami Marlins
+  'ARI': '29', // Arizona Diamondbacks
+  'TB': '30'   // Tampa Bay Rays
+};
+
+// Helper function to get team by abbreviation
+export function getTeamByAbbrev(abbrev) {
+  const teamId = TEAM_ABBREV_TO_ID[abbrev];
+  return teamId ? getTeamById(teamId) : null;
+}
+
 // Helper function to check if we're past opening day for a given season
 export function isPastOpeningDay(season) {
   // Opening day for 2025 was March 27
