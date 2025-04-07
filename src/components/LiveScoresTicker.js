@@ -27,16 +27,24 @@ export async function renderLiveScoresTicker() {
     // Filter for live/in-progress games
     const liveGames = data.scores.filter(game => 
       game.status.state === 'in' || 
-      (game.status.state === 'post' && !game.status.completed)
+      (game.status.state === 'post' && !game.status.completed && game.status.detail !== 'Postponed')
     );
 
+    // Filter for postponed games
+    const postponedGames = data.scores.filter(game => 
+      game.status.state === 'post' && 
+      game.status.detail === 'Postponed' && 
+      !game.status.completed
+    );
+
+    // Hide ticker if there are no live games
     if (liveGames.length === 0) {
       liveScoresContainer.style.display = 'none';
       return;
     }
 
-    // Create the live scores HTML
-    const scoresHtml = liveGames.map(game => {
+    // Create the live scores HTML - include both live games and postponed games
+    const scoresHtml = [...liveGames, ...postponedGames].map(game => {
       const awayTeam = game.teams.awayTeam;
       const homeTeam = game.teams.homeTeam;
       const inningInfo = game.status.shortDetail || game.status.detail;
