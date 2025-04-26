@@ -67,7 +67,7 @@ export async function renderScores(teamId, season) {
       // Sort events based on current sort direction if sort toggle exists
       const sortToggle = document.getElementById('scores-sort-toggle');
       if (sortToggle) {
-        const sortDirection = sortToggle.dataset.sort || 'asc';
+        const sortDirection = sortToggle.dataset.sort || 'desc';
         filteredEvents.sort((a, b) => {
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
@@ -101,8 +101,7 @@ export async function renderScores(teamId, season) {
 
             return `
               <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2 ${
-                game.isPostseason ? 'bg-green-50 bg-opacity-50 dark:bg-green-900 dark:bg-opacity-40' :
-                game.isDoubleHeader ? 'bg-blue-50 bg-opacity-50 dark:bg-blue-900 dark:bg-opacity-40' : ''
+                game.isPostseason ? 'bg-green-50 bg-opacity-50 dark:bg-green-900 dark:bg-opacity-40' : ''
               }">
                 <div class="flex items-center">
                   <div class="w-14 text-sm text-gray-600 dark:text-gray-400">${formattedDate}</div>
@@ -207,7 +206,7 @@ export async function renderScores(teamId, season) {
     }
 
     if (dateSortToggle) {
-      dateSortToggle.dataset.sort = 'asc';
+      dateSortToggle.dataset.sort = 'desc';
       dateSortToggle.addEventListener('click', () => {
         const currentSort = dateSortToggle.dataset.sort;
         const newSort = currentSort === 'desc' ? 'asc' : 'desc';
