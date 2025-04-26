@@ -339,7 +339,8 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
           </div>
           <div class="flex items-center gap-4">
             <p class="text-gray-700 dark:text-gray-300 tabular-nums">
-              ${team.record}
+              ${team.divisionRecord} 
+              <span class="text-xs text-gray-500 dark:text-gray-400">(${team.record})</span>
             </p>
             <p class="px-2 py-0.5 rounded-md font-medium text-xs min-w-[36px] text-center ${
               team.standingSummary.startsWith('1st') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :

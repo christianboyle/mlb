@@ -537,35 +537,62 @@ export async function getDivisionStandings(season, teamId, showSpringTraining = 
           winPct
         };
       } else {
-        // For regular season, use the original method
+        // For regular season, fetch the schedule
         const scheduleRes = await fetch(
           `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${team.teamId}/schedule?season=${seasonNum}&seasontype=2`
         );
         const scheduleData = await scheduleRes.json();
         
-        // Calculate record from regular season games
+        // Calculate overall record from regular season games
         let wins = 0;
         let losses = 0;
         scheduleData.events?.forEach(event => {
           const teamInGame = event.competitions?.[0]?.competitors?.find(
             c => c.team?.id === team.teamId
           );
-          if (teamInGame?.winner === true) wins++;
+          // Check only for win/loss, ignore ties for overall record simplicity here
+          if (teamInGame?.winner === true) wins++; 
           else if (teamInGame?.winner === false) losses++;
         });
         
+        // Calculate overall win percentage (excluding ties for simplicity in this context)
         const winPct = wins + losses > 0 ? wins / (wins + losses) : 0;
+        
+        // Get list of team IDs in the current division (Needed for division record calc below)
+        const divisionTeamIds = divisionTeams.map(t => t.teamId);
+
+        // Calculate division record from regular season games AGAINST division opponents
+        let divisionWins = 0;
+        let divisionLosses = 0;
+        scheduleData.events?.forEach(event => {
+          const competition = event.competitions?.[0];
+          if (!competition?.competitors) return;
+
+          const teamInGame = competition.competitors.find(
+            c => c.team?.id === team.teamId
+          );
+          const opposingTeam = competition.competitors.find(
+            c => c.team?.id !== team.teamId
+          );
+
+          // Only count games against division opponents
+          if (teamInGame && opposingTeam && divisionTeamIds.includes(opposingTeam.team?.id)) {
+            if (teamInGame.winner === true) divisionWins++;
+            else if (teamInGame.winner === false) divisionLosses++;
+          }
+        });
         
         return {
           id: team.teamId,
           name: team.name,
           logo: team.logo,
           color: team.color,
-          wins,
-          losses,
-          ties: 0,
-          record: `${wins}-${losses}`,
-          winPct
+          wins, // Overall wins
+          losses, // Overall losses
+          ties: 0, // Assuming no ties counted for overall record here
+          record: `${wins}-${losses}`, // Overall record string
+          divisionRecord: `${divisionWins}-${divisionLosses}`, // Division record string
+          winPct // Overall win percentage for sorting
         };
       }
     });
