@@ -67,7 +67,10 @@ async function updateLiveGameDetails(gameId) {
                       class="h-4 w-4"
                     />
                   </a>
-                  <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                  <div class="flex items-center gap-1 ${!isComplete && isInProgress && ((team.homeAway === 'away' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Top')) || (team.homeAway === 'home' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Bottom'))) ? 'bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full' : ''}">
+                    <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                    ${!isComplete && isInProgress && ((team.homeAway === 'away' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Top')) || (team.homeAway === 'home' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Bottom'))) ? '<span class="text-gray-600 dark:text-gray-400">⚾</span>' : ''}
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -158,7 +161,10 @@ async function updateLiveGameDetails(gameId) {
                   class="h-4 w-4"
                 />
               </a>
-              <span class="font-medium text-gray-900 dark:text-white ${previousScores[index] !== newScores[index] ? 'font-bold' : ''}">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+              <div class="flex items-center gap-1 ${!isComplete && isInProgress && ((team.homeAway === 'away' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Top')) || (team.homeAway === 'home' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Bottom'))) ? 'bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full' : ''}">
+                <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                ${!isComplete && isInProgress && ((team.homeAway === 'away' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Top')) || (team.homeAway === 'home' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Bottom'))) ? '<span class="text-gray-600 dark:text-gray-400">⚾</span>' : ''}
+              </div>
             </div>
           `).join('')}
         </div>
@@ -448,7 +454,7 @@ export async function renderSchedule(teamId, season) {
                       ${isComplete ? 'FINAL' : liveGameDetails?.header?.competitions?.[0]?.status?.type?.detail || 'In Progress'}
                     </div>
                     <div class="flex items-center gap-6">
-                      ${liveGameDetails?.boxscore?.teams?.map(team => `
+                      ${liveGameDetails?.boxscore?.teams?.map((team, index) => `
                         <div class="flex items-center gap-2">
                           <a href="/${getTeamByAbbrev(team.team?.abbreviation)?.slug || ''}" class="hover:opacity-80 transition-opacity">
                             <img 
@@ -457,7 +463,10 @@ export async function renderSchedule(teamId, season) {
                               class="h-4 w-4"
                             />
                           </a>
-                          <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                          <div class="flex items-center gap-1 ${!isComplete && isInProgress && ((team.homeAway === 'away' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Top')) || (team.homeAway === 'home' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Bottom'))) ? 'bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full' : ''}">
+                            <span class="font-medium text-gray-900 dark:text-white">${team.statistics?.find(stat => stat.name === 'batting')?.stats?.find(stat => stat.name === 'runs')?.displayValue || '0'}</span>
+                            ${!isComplete && isInProgress && ((team.homeAway === 'away' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Top')) || (team.homeAway === 'home' && liveGameDetails.header?.competitions?.[0]?.status?.type?.detail?.startsWith('Bottom'))) ? '<span class="text-gray-600 dark:text-gray-400">⚾</span>' : ''}
+                          </div>
                         </div>
                       `).join('')}
                     </div>
