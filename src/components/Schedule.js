@@ -385,7 +385,11 @@ export async function renderSchedule(teamId, season) {
         const opposingTeamInfo = getTeamById(opposingTeam.team.id);
 
         // Check for promotions
-        const gameDate = date.toISOString().split('T')[0];
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // getMonth is 0-indexed
+        const day = date.getDate().toString().padStart(2, '0');
+        const gameDate = `${year}-${month}-${day}`;
+
         const hasPromotion = promotions[gameDate];
         
         return `
