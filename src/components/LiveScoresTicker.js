@@ -3,7 +3,7 @@ import { getTeamByAbbrev } from '../espn.js';
 // Function to fetch live scores from the API
 async function fetchLiveScores() {
   try {
-    const response = await fetch('https://scores.weaklytyped.com/api/v1/sports/mlb/events');
+    const response = await fetch('https://scores.christianboyle.com/api/v1/sports/mlb/events');
     const data = await response.json();
     return data;
   } catch (error) {
