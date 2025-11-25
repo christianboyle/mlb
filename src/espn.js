@@ -205,8 +205,8 @@ export const ALL_TEAMS = [
   ...NL_WEST_TEAMS
 ];
 
-export const CURRENT_SEASON = 2025;
-export const DISPLAY_YEAR = 2025;
+export const CURRENT_SEASON = 2026;
+export const DISPLAY_YEAR = 2026;
 
 // Helper function to fetch games by season type
 async function fetchGames(teamId, season, type) {
@@ -219,8 +219,8 @@ async function fetchGames(teamId, season, type) {
 
 export async function getScores(teamId, season) {
   try {
-    // For 2025, show spring training games only if we're not past opening day
-    if (season === 2025 && !isPastOpeningDay(season)) {
+    // For 2026, show spring training games only if we're not past opening day
+    if (season === 2026 && !isPastOpeningDay(season)) {
       const springRes = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
       );
@@ -397,8 +397,8 @@ export async function getTeamRecord(teamId, season) {
     // Convert season to a number for consistent comparison
     const seasonNum = parseInt(season);
     
-    // For 2025, show spring training record only if we're not past opening day
-    if (seasonNum === 2025 && !isPastOpeningDay(season)) {
+    // For 2026, show spring training record only if we're not past opening day
+    if (seasonNum === 2026 && !isPastOpeningDay(season)) {
       const springRes = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${seasonNum}&seasontype=1`
       );
@@ -483,9 +483,9 @@ export async function getDivisionStandings(season, teamId, showSpringTraining = 
       throw new Error('Team not found in any division');
     }
 
-    // For 2025 and spring training toggle on, show spring training standings
-    // Make sure showSpringTraining is true for 2025
-    const shouldShowSpringTraining = (seasonNum === 2025) ? showSpringTraining : false;
+    // For 2026 and spring training toggle on, show spring training standings
+    // Make sure showSpringTraining is true for 2026
+    const shouldShowSpringTraining = (seasonNum === 2026) ? showSpringTraining : false;
     
     // Fetch each team's record
     const teamPromises = divisionTeams.map(async (team) => {
@@ -534,7 +534,10 @@ export async function getDivisionStandings(season, teamId, showSpringTraining = 
           losses,
           ties,
           record: `${wins}-${losses}${ties > 0 ? `-${ties}` : ''}`,
-          winPct
+          divisionRecord: `${wins}-${losses}${ties > 0 ? `-${ties}` : ''}`, // Spring training doesn't have division games, use overall record
+          winPct,
+          isSpringTraining: true,
+          standingSummary: '' // Will be set after sorting
         };
       } else {
         // For regular season, fetch the schedule
@@ -592,7 +595,9 @@ export async function getDivisionStandings(season, teamId, showSpringTraining = 
           ties: 0, // Assuming no ties counted for overall record here
           record: `${wins}-${losses}`, // Overall record string
           divisionRecord: `${divisionWins}-${divisionLosses}`, // Division record string
-          winPct // Overall win percentage for sorting
+          winPct, // Overall win percentage for sorting
+          isSpringTraining: false,
+          standingSummary: '' // Will be set after sorting
         };
       }
     });
@@ -814,8 +819,10 @@ export function getTeamByAbbrev(abbrev) {
 
 // Helper function to check if we're past opening day for a given season
 export function isPastOpeningDay(season) {
-  // Opening day for 2025 was March 27
-  const openingDay = new Date(2025, 2, 27); // Month is 0-based, so 2 = March
+  // First regular season game for 2026 is March 25 (away game)
+  // Home opener is March 30, but regular season starts March 25
+  // Spring training runs until March 21
+  const openingDay = new Date(2026, 2, 25); // Month is 0-based, so 2 = March
   const today = new Date();
   
   return today > openingDay;

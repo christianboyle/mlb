@@ -11,10 +11,21 @@ export async function getTeamPromotions(teamId) {
       
       const promotions = {};
       const games = royalsPromotions.events?.game || royalsPromotions.game || [];
+      
+      console.log(`[Promotions] Loaded ${games.length} games from JSON`);
+      
       if (games.length > 0) {
+        let gamesWithPromotions = 0;
         games.forEach(game => {
           if (game.promotion) {
-            const date = game.game_date.split('T')[0];
+            gamesWithPromotions++;
+            // Handle date - it might already be in YYYY-MM-DD format or have time component
+            const date = game.game_date ? game.game_date.split('T')[0] : null;
+            
+            if (!date) {
+              console.warn('[Promotions] Game missing game_date:', game);
+              return;
+            }
             
             // Handle both single promotion object and array of promotions
             const promotionArray = Array.isArray(game.promotion) ? game.promotion : [game.promotion];
@@ -35,10 +46,15 @@ export async function getTeamPromotions(teamId) {
                   presenter: p.presented_by || null
                 }))
               };
+              console.log(`[Promotions] Added promotion for ${date}:`, promotions[date].name);
             }
           }
         });
+        
+        console.log(`[Promotions] Found ${gamesWithPromotions} games with promotions out of ${games.length} total games`);
+        console.log(`[Promotions] Total promotion dates: ${Object.keys(promotions).length}`);
       }
+      
       return promotions;
     } catch (error) {
       console.error('Error loading Royals promotions:', error);

@@ -112,7 +112,7 @@ async function renderHome({ teamId, params }) {
                       class="appearance-none bg-[#ccc] dark:bg-black text-gray-800 dark:text-gray-200 font-semibold px-3 py-2 pr-8 rounded-md border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                       value="${season}"
                     >
-                      ${[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000].map(year => `
+                      ${[2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000].map(year => `
                         <option value="${year}" ${year === parseInt(season) ? 'selected' : ''}>
                           ${year}
                         </option>
@@ -205,8 +205,8 @@ async function renderHome({ teamId, params }) {
         `;
         document.getElementById('standings').innerHTML = standingsHtml;
         
-        // For 2025, show spring training only if we're not past opening day
-        const showSpringTraining = season.toString() === '2025' ? !isPastOpeningDay(season) : false;
+        // For 2026, show spring training only if we're not past opening day
+        const showSpringTraining = season.toString() === '2026' ? !isPastOpeningDay(season) : false;
         
         // Render standings with appropriate type
         renderPromises.push(renderDivisionStandings(teamId, season, showSpringTraining));
@@ -293,8 +293,8 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
   const standingsList = document.getElementById('standings-list');
   if (!standingsList) return;
   
-  // For 2025, show spring training only if we're not past opening day
-  if (season.toString() === '2025') {
+  // For 2026, show spring training only if we're not past opening day
+  if (season.toString() === '2026') {
     showSpringTraining = !isPastOpeningDay(season);
   }
   
@@ -324,7 +324,7 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
     const standingsHtml = standings.map((team) => {
       const teamInfo = getTeamById(team.id);
       return `
-        <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2" ${team.isSpringTraining && season !== 2025 ? 'style="display: none;"' : ''}>
+        <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2" ${team.isSpringTraining && season !== 2026 ? 'style="display: none;"' : ''}>
           <div class="flex items-center">
             <a href="/${teamInfo?.slug || ''}" class="hover:opacity-80 transition-opacity">
               <img 
@@ -339,16 +339,17 @@ async function renderDivisionStandings(teamId, season, showSpringTraining) {
           </div>
           <div class="flex items-center gap-4">
             <p class="text-gray-700 dark:text-gray-300 tabular-nums">
-              ${team.divisionRecord} 
-              <span class="text-xs text-gray-500 dark:text-gray-400">(${team.record})</span>
+              ${showSpringTraining 
+                ? team.record 
+                : `${team.divisionRecord || team.record} <span class="text-xs text-gray-500 dark:text-gray-400">(${team.record})</span>`}
             </p>
             <p class="px-2 py-0.5 rounded-md font-medium text-xs min-w-[36px] text-center ${
-              team.standingSummary.startsWith('1st') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-              team.standingSummary.startsWith('2nd') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-              team.standingSummary.startsWith('3rd') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+              team.standingSummary && team.standingSummary.startsWith('1st') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+              team.standingSummary && team.standingSummary.startsWith('2nd') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+              team.standingSummary && team.standingSummary.startsWith('3rd') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
               'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
             }">
-              ${team.standingSummary.split(' in ')[0]}
+              ${team.standingSummary ? team.standingSummary.split(' in ')[0] : ''}
             </p>
           </div>
         </div>

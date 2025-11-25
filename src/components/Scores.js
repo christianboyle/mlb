@@ -23,8 +23,8 @@ export async function renderScores(teamId, season) {
       // First filter out upcoming games (no winner set)
       const completedGames = events.filter(e => e.competitions?.competitors?.some(c => c.winner !== undefined));
       
-      // For 2025, show regular season games after opening day
-      if (season === 2025) {
+      // For 2026, show regular season games after opening day
+      if (season === 2026) {
         if (isPastOpeningDay(season)) {
           return completedGames.filter(e => !e.isSpringTraining);
         }
@@ -43,7 +43,7 @@ export async function renderScores(teamId, season) {
     const pastOpeningDay = isPastOpeningDay(season);
 
     // Initialize spring training state - show spring training only before opening day
-    let showSpringTraining = season === 2025 && !pastOpeningDay;
+    let showSpringTraining = season === 2026 && !pastOpeningDay;
 
     // Initial render with filtered events
     let filteredEvents = filterBySeasonType(data.events, showSpringTraining);
@@ -57,7 +57,7 @@ export async function renderScores(teamId, season) {
         // If we're past opening day, show a different message
         const message = isPastOpeningDay(season) 
           ? 'No games played yet.'
-          : 'Opening Day is on Thursday, March 27.';
+          : 'Regular season starts March 25. Home opener is March 30.';
         gamesListContainer.innerHTML = `<div class="mt-6 text-gray-600 dark:text-gray-400">${message}</div>`;
         const gamesCount = document.querySelector('.text-gray-500');
         if (gamesCount) gamesCount.textContent = '0 Games';

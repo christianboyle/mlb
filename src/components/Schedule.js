@@ -325,6 +325,9 @@ export async function renderSchedule(teamId, season) {
       getTeamPromotions(teamId)
     ]);
     
+    console.log('[Schedule] Loaded promotions:', Object.keys(promotions).length, 'dates');
+    console.log('[Schedule] Promotion dates:', Object.keys(promotions));
+    
     // Filter out games that have already happened
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Start of today
@@ -392,8 +395,12 @@ export async function renderSchedule(teamId, season) {
 
         const hasPromotion = promotions[gameDate];
         
+        if (hasPromotion) {
+          console.log(`[Schedule] Found promotion for ${gameDate}:`, hasPromotion.name);
+        }
+        
         return `
-          <div data-game-id="${game.id}" ${game.isSpringTraining ? 'data-spring-training="true"' : ''} style="${game.isSpringTraining && season !== 2025 ? 'display: none;' : ''}">
+          <div data-game-id="${game.id}" ${game.isSpringTraining ? 'data-spring-training="true"' : ''} style="${game.isSpringTraining && season !== 2026 ? 'display: none;' : ''}">
             <div class="flex items-center justify-between px-0 min-[450px]:px-4 py-2">
               <div class="flex items-center">
                 <div class="w-14 text-sm text-gray-600 dark:text-gray-400">
@@ -652,9 +659,9 @@ export async function renderSchedule(teamId, season) {
       });
     }
 
-    // Initial state - show spring training games for 2025 only if we're not past opening day
+    // Initial state - show spring training games for 2026 only if we're not past opening day
     if (springTrainingToggle) {
-      const shouldShowSpringTraining = season === 2025 && !isPastOpeningDay(season);
+      const shouldShowSpringTraining = season === 2026 && !isPastOpeningDay(season);
       updateScheduleSpringTrainingButton(shouldShowSpringTraining);
       
       // Update initial visibility of spring training games
