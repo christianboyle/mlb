@@ -1,4 +1,4 @@
-import { getScores, ALL_TEAMS, getTeamRecord, getTeamById, isPastOpeningDay } from '../espn.js';
+import { getScores, getTeamRecord, getTeamById, isPastOpeningDay } from '../espn.js';
 import { renderScoresControls, updateSpringTrainingButton } from './ScoresControls.js';
 
 export async function renderScores(teamId, season) {
@@ -7,11 +7,13 @@ export async function renderScores(teamId, season) {
   try {
     scoresContainer.innerHTML = '<div class="mt-6">Loading scores...</div>';
     
-    const data = await getScores(teamId, season);
-    const teamData = await getTeamRecord(teamId, season);
+    const [data, teamData] = await Promise.all([
+      getScores(teamId, season),
+      getTeamRecord(teamId, season),
+    ]);
     
     // Get the current team's info
-    const currentTeam = ALL_TEAMS.find(team => team.teamId === teamId);
+    const currentTeam = getTeamById(teamId);
     if (!currentTeam) {
       throw new Error(`Team not found: ${teamId}`);
     }

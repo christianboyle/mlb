@@ -260,18 +260,12 @@ export async function getScores(teamId, season) {
       };
     }
 
-    // For other seasons or after opening day, fetch all game types
-    // Fetch spring training games
-    const springRes = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
-    );
-    const springData = await springRes.json();
-    
-    // Fetch regular season games
-    const regularRes = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
-    );
-    const regularData = await regularRes.json();
+    // For other seasons or after opening day, fetch all game types in parallel
+    const [springData, regularData, postData] = await Promise.all([
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`).then(r => r.json()),
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`).then(r => r.json()),
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`).then(r => r.json()),
+    ]);
 
     // Group games by date to identify double-headers
     const gamesByDate = {};
@@ -282,12 +276,6 @@ export async function getScores(teamId, season) {
       }
       gamesByDate[date].push(e.id);
     });
-
-    // Fetch postseason games
-    const postRes = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
-    );
-    const postData = await postRes.json();
 
     // Transform the data to match our needs
     const transformedData = {
@@ -378,10 +366,15 @@ export async function getScores(teamId, season) {
           })?.[0]
         })) || [])
       ]
-        // Remove duplicates based on event ID
-        .filter((event, index, self) => 
-          index === self.findIndex((e) => e.id === event.id)
-        )
+        // Remove duplicates based on event ID (O(n) with Set)
+        .filter((() => {
+          const seen = new Set();
+          return (event) => {
+            if (seen.has(event.id)) return false;
+            seen.add(event.id);
+            return true;
+          };
+        })())
         .sort((a, b) => b.date - a.date)
     };
 
@@ -649,23 +642,12 @@ export async function getDivisionStandings(season, teamId, showSpringTraining = 
 
 export async function getSchedule(teamId, season) {
   try {
-    // Fetch spring training games
-    const springRes = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`
-    );
-    const springData = await springRes.json();
-
-    // Fetch regular season games
-    const regularRes = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`
-    );
-    const regularData = await regularRes.json();
-
-    // Fetch postseason games
-    const postRes = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`
-    );
-    const postData = await postRes.json();
+    // Fetch all season types in parallel
+    const [springData, regularData, postData] = await Promise.all([
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=1`).then(r => r.json()),
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=2`).then(r => r.json()),
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/${teamId}/schedule?season=${season}&seasontype=3`).then(r => r.json()),
+    ]);
 
     return {
       events: [
@@ -724,10 +706,15 @@ export async function getSchedule(teamId, season) {
           }))?.[0]
         })) || [])
       ]
-        // Remove duplicates based on event ID
-        .filter((event, index, self) => 
-          index === self.findIndex((e) => e.id === event.id)
-        )
+        // Remove duplicates based on event ID (O(n) with Set)
+        .filter((() => {
+          const seen = new Set();
+          return (event) => {
+            if (seen.has(event.id)) return false;
+            seen.add(event.id);
+            return true;
+          };
+        })())
         // Sort by date
         .sort((a, b) => a.date - b.date)
     };
@@ -742,14 +729,18 @@ export function teamNameToSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+// O(1) lookup maps (built after slugs are added to teams)
+const TEAM_BY_ID = new Map();
+const TEAM_BY_SLUG = new Map();
+
 // Helper function to get team by slug
 export function getTeamBySlug(slug) {
-  return ALL_TEAMS.find(team => teamNameToSlug(team.name) === slug);
+  return TEAM_BY_SLUG.get(slug);
 }
 
 // Helper function to get team by ID
 export function getTeamById(id) {
-  return ALL_TEAMS.find(team => team.teamId === id);
+  return TEAM_BY_ID.get(id);
 }
 
 // Add slug to each team
@@ -775,6 +766,12 @@ NL_CENTRAL_TEAMS.forEach(team => {
 
 NL_WEST_TEAMS.forEach(team => {
   team.slug = teamNameToSlug(team.name);
+});
+
+// Build O(1) lookup maps
+ALL_TEAMS.forEach(team => {
+  TEAM_BY_ID.set(team.teamId, team);
+  TEAM_BY_SLUG.set(team.slug, team);
 });
 
 // Mapping between team abbreviations and team IDs

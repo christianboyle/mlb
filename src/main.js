@@ -1,4 +1,4 @@
-import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR, ALL_TEAMS, getTeamById, getTeamBySlug, getScores, getTeamRecord, isPastOpeningDay } from './espn.js';
+import { AL_EAST_TEAMS, AL_CENTRAL_TEAMS, AL_WEST_TEAMS, NL_EAST_TEAMS, NL_CENTRAL_TEAMS, NL_WEST_TEAMS, getDivisionStandings, CURRENT_SEASON, DISPLAY_YEAR, getTeamById, getTeamBySlug, getScores, getTeamRecord, isPastOpeningDay } from './espn.js';
 import { renderScores } from './components/Scores.js';
 import { renderSchedule } from './components/Schedule.js';
 import { renderMobileNav } from './components/MobileNav.js';
@@ -9,26 +9,12 @@ import './style.css';
 const router = new Router();
 let liveScoresCleanup = null;
 
-// Initialize theme based on OS preference
-function initializeTheme() {
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-}
-
-// Listen for OS theme changes
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  if (e.matches) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
+// Initialize theme from single matchMedia query (avoids duplicate MediaQueryList)
+const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+document.documentElement.classList.toggle('dark', darkModeQuery.matches);
+darkModeQuery.addEventListener('change', (e) => {
+  document.documentElement.classList.toggle('dark', e.matches);
 });
-
-// Initialize theme on load
-initializeTheme();
 
 // Clean up on page unload
 window.addEventListener('unload', () => {
@@ -227,7 +213,7 @@ async function renderHome({ teamId, params }) {
     if (select) {
       select.addEventListener('change', (e) => {
         if (e.target.value) {
-          const selectedTeam = ALL_TEAMS.find(team => team.teamId === e.target.value);
+          const selectedTeam = getTeamById(e.target.value);
           const isMobile = window.innerWidth < 640; // sm breakpoint
           if (isMobile) {
             window.location.href = `/${selectedTeam.slug}?tab=scores`;
