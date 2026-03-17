@@ -18,8 +18,9 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Serve data files
 app.use('/data', express.static(path.join(__dirname, 'src', 'data')));
 
-// Catch-all route to serve index.html for client-side routing
-app.get('*', (req, res) => {
+// Express 5 requires named wildcards in route patterns.
+// This catches all non-static paths and serves the SPA entrypoint.
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
