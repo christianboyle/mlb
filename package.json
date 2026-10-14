@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "http-proxy-middleware": "^3.0.7"
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
